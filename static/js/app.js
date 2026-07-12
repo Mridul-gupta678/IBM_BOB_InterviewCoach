@@ -117,7 +117,6 @@ function renderMarkdown(text) {
     }
     
     if (line === "") {
-      closeList();
       continue;
     }
     
