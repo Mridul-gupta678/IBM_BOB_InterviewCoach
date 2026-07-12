@@ -309,22 +309,42 @@ def get_llm_generation(messages: list, data: dict) -> tuple[str, str]:
             raise ValueError("Hugging Face API token not provided.")
         return generate_huggingface_text(messages, hf_api_key, hf_model)
 
-    # Determine cascade order based on provider selection
-    cascade_order = []
+    # If a specific provider is chosen, do not cascade/fallback.
     if provider == "watsonx":
-        cascade_order = ["watsonx", "huggingface", "demo"]
+        try:
+            res = try_watsonx()
+            try:
+                g.actual_model = watsonx_model_id
+            except Exception:
+                pass
+            return res, "watsonx"
+        except Exception as e:
+            app.logger.error(f"Watsonx explicit request failed: {e}")
+            raise ValueError(f"Watsonx API not connected: {e}")
+            
     elif provider == "huggingface":
-        cascade_order = ["huggingface", "watsonx", "demo"]
+        try:
+            res_txt, res_model = try_huggingface()
+            try:
+                g.actual_model = res_model
+            except Exception:
+                pass
+            return res_txt, "huggingface"
+        except Exception as e:
+            app.logger.error(f"Hugging Face explicit request failed: {e}")
+            raise ValueError(f"Hugging Face API not connected: {e}")
+            
     elif provider == "demo":
-        cascade_order = ["demo"]
-    else: # auto
-        cascade_order = ["watsonx", "huggingface", "demo"]
-
-    for p in cascade_order:
-        if p == "watsonx":
-            if not watsonx_api_key or not watsonx_project_id:
-                errors.append("Watsonx: credentials not set")
-                continue
+        try:
+            g.actual_model = "demo"
+        except Exception:
+            pass
+        return "", "demo"
+        
+    # Auto-detect mode cascade
+    else:
+        # Cascade order: watsonx -> huggingface -> demo
+        if watsonx_api_key and watsonx_project_id:
             try:
                 res = try_watsonx()
                 try:
@@ -333,13 +353,10 @@ def get_llm_generation(messages: list, data: dict) -> tuple[str, str]:
                     pass
                 return res, "watsonx"
             except Exception as e:
-                app.logger.warning(f"Watsonx cascade path failed: {e}")
+                app.logger.warning(f"Auto-detect Watsonx fallback path failed: {e}")
                 errors.append(f"Watsonx: {e}")
                 
-        elif p == "huggingface":
-            if not hf_api_key:
-                errors.append("Hugging Face: credentials not set")
-                continue
+        if hf_api_key:
             try:
                 res_txt, res_model = try_huggingface()
                 try:
@@ -348,22 +365,15 @@ def get_llm_generation(messages: list, data: dict) -> tuple[str, str]:
                     pass
                 return res_txt, "huggingface"
             except Exception as e:
-                app.logger.warning(f"Hugging Face cascade path failed: {e}")
+                app.logger.warning(f"Auto-detect Hugging Face fallback path failed: {e}")
                 errors.append(f"Hugging Face: {e}")
                 
-        elif p == "demo":
-            try:
-                g.actual_model = "demo"
-            except Exception:
-                pass
-            return "", "demo"
-
-    # Fallback to demo mode as final safety net
-    try:
-        g.actual_model = "demo"
-    except Exception:
-        pass
-    return "", "demo"
+        # Default fallback to demo
+        try:
+            g.actual_model = "demo"
+        except Exception:
+            pass
+        return "", "demo"
 
 
 

@@ -349,6 +349,7 @@ async function sendChatMessage() {
   } catch (err) {
     typing.remove();
     appendChatMsg("bot", `⚠️ Error: ${err.message}`);
+    reportAPIError(err.message);
   } finally {
     $("sendBtn").disabled = false;
     $("chatInput").focus();
@@ -477,6 +478,7 @@ async function startMockSession() {
   } catch (err) {
     hideLoading();
     showToast(`Error: ${err.message}`, "danger");
+    reportAPIError(err.message);
   }
 }
 
@@ -572,6 +574,7 @@ async function submitAnswer() {
   } catch (err) {
     hideLoading();
     showToast(`Evaluation error: ${err.message}`, "danger");
+    reportAPIError(err.message);
   }
 }
 
@@ -692,6 +695,7 @@ async function analyzeResume() {
   } catch (err) {
     hideLoading();
     showToast(`Resume analysis error: ${err.message}`, "danger");
+    reportAPIError(err.message);
   }
 }
 
@@ -728,6 +732,7 @@ async function generateStrategy() {
   } catch (err) {
     hideLoading();
     showToast(`Strategy generation error: ${err.message}`, "danger");
+    reportAPIError(err.message);
   }
 }
 
@@ -1025,6 +1030,32 @@ function updateActiveModelUI(provider, modelName) {
   if ($("resumeActiveModel")) $("resumeActiveModel").textContent = labelText;
   if ($("prepActiveModel"))   $("prepActiveModel").textContent   = labelText;
   if ($("infoModel"))         $("infoModel").textContent         = modelName || "unknown";
+}
+
+function reportAPIError(errorMsg) {
+  const settings = JSON.parse(localStorage.getItem("itc-settings") || "{}");
+  const provider = settings.llm_provider || "auto";
+  const dot = $("statusDot");
+  let providerLabel = "API";
+  
+  if (provider === "watsonx") providerLabel = "Watsonx";
+  else if (provider === "huggingface") providerLabel = "Hugging Face";
+  else if (provider === "demo") providerLabel = "Demo";
+  
+  if (dot) {
+    dot.className = "status-dot error-state";
+    dot.title = `Error: ${errorMsg}`;
+  }
+  
+  if ($("infoStatus")) $("infoStatus").textContent = `Error`;
+  if ($("infoStatusCard")) $("infoStatusCard").textContent = `Error`;
+  
+  const labelText = `Active LLM: ${providerLabel} (API not connected)`;
+  if ($("chatActiveModel"))   $("chatActiveModel").textContent   = labelText;
+  if ($("mockActiveModel"))   $("mockActiveModel").textContent   = labelText;
+  if ($("resumeActiveModel")) $("resumeActiveModel").textContent = labelText;
+  if ($("prepActiveModel"))   $("prepActiveModel").textContent   = labelText;
+  if ($("infoModel"))         $("infoModel").textContent         = "API not connected";
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
