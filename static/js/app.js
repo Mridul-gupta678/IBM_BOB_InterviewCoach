@@ -167,7 +167,7 @@ function hideLoading() { $("loadingOverlay").classList.add("d-none"); }
 //  DARK MODE
 // ═════════════════════════════════════════════════════════════════════════════
 function initDarkMode() {
-  const saved = localStorage.getItem("itc-theme") || "light";
+  const saved = localStorage.getItem("itc-theme") || "dark";
   applyTheme(saved);
 
   $("darkModeToggle").addEventListener("click", () => {
