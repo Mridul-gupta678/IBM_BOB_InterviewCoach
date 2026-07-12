@@ -1019,7 +1019,7 @@ def debug_llm():
             hf_endpoints_status[f"fallback_{fb_model.replace('/', '_')}"] = f"Error: {e}"
 
     # Test OpenAI compatible router
-    for model_name in ["Qwen/Qwen2.5-7B-Instruct", "meta-llama/Llama-3.3-70B-Instruct"]:
+    for model_name in ["Qwen/Qwen2.5-7B-Instruct", "meta-llama/Llama-3.3-70B-Instruct", "microsoft/Phi-3-mini-4k-instruct"]:
         try:
             r = requests.post(
                 "https://router.huggingface.co/hf-inference/v1/chat/completions",
