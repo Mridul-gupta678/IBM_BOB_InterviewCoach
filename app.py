@@ -950,21 +950,31 @@ def debug_llm():
     except Exception as e:
         watsonx_err = f"Error: {str(e)}"
 
-    # Test Hugging Face
-    try:
-        api_key = os.getenv("HUGGINGFACE_API_KEY")
-        model_id = os.getenv("HUGGINGFACE_MODEL_ID", "meta-llama/Llama-3.3-70B-Instruct")
-        if not api_key:
-            hf_err = "Hugging Face API key not configured"
-        else:
-            generate_huggingface_text([{"role": "user", "content": "Hello"}], api_key, model_id)
-            hf_err = "Success!"
-    except Exception as e:
-        hf_err = f"Error: {str(e)}"
+    # Test Hugging Face endpoints
+    hf_endpoints_status = {}
+    api_key = os.getenv("HUGGINGFACE_API_KEY")
+    model_id = os.getenv("HUGGINGFACE_MODEL_ID", "meta-llama/Llama-3.3-70B-Instruct")
+    prompt = format_prompt_for_model([{"role": "user", "content": "Hello"}], model_id)
+    
+    endpoints = {
+        "legacy": f"https://api-inference.huggingface.co/models/{model_id}",
+        "router_models": f"https://router.huggingface.co/models/{model_id}",
+        "router_hf_inference": f"https://router.huggingface.co/hf-inference/models/{model_id}",
+        "api": f"https://api.huggingface.co/models/{model_id}"
+    }
+    
+    for name, url in endpoints.items():
+        try:
+            headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+            payload = {"inputs": prompt, "parameters": {"max_new_tokens": 10, "temperature": 0.7}}
+            r = requests.post(url, headers=headers, json=payload, timeout=8)
+            hf_endpoints_status[name] = f"Status: {r.status_code}, Body: {r.text[:120]}"
+        except Exception as e:
+            hf_endpoints_status[name] = f"Error: {e}"
 
     return jsonify({
         "watsonx": watsonx_err,
-        "huggingface": hf_err,
+        "huggingface_endpoints": hf_endpoints_status,
         "dns": dns_resolved,
         "env_keys": {
             "has_ibm_key": os.getenv("IBM_API_KEY") is not None,
