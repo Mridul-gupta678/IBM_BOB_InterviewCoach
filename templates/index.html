@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InterviewCoach — AI Interview Trainer | IBM Watsonx</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<!-- ═══════════ NAVBAR ═══════════════════════════════════════════════════════ -->
+<nav class="navbar navbar-expand-lg sticky-top" id="mainNav">
+  <div class="container-fluid px-3 px-lg-5">
+    <a class="navbar-brand d-flex align-items-center gap-2" href="#">
+      <span class="brand-icon">🎯</span>
+      <span class="brand-text">InterviewCoach</span>
+      <span class="badge badge-ai ms-1" id="infoStatus">IBM Watsonx</span>
+    </a>
+    <div class="d-flex align-items-center gap-2 ms-auto">
+      <span class="status-dot" id="statusDot" title="Connection status"></span>
+      <button class="btn btn-icon" id="settingsToggle" title="Configure LLM Providers" data-bs-toggle="modal" data-bs-target="#settingsModal">
+        <i class="bi bi-gear-fill"></i>
+      </button>
+      <button class="btn btn-icon" id="darkModeToggle" title="Toggle Dark Mode">
+        <i class="bi bi-moon-stars-fill" id="darkIcon"></i>
+      </button>
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas">
+        <i class="bi bi-list fs-4"></i>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════ OFFCANVAS SIDEBAR (mobile) ═══════════════════════════════════ -->
+<div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarOffcanvas">
+  <div class="offcanvas-header border-bottom">
+    <h5 class="offcanvas-title fw-bold">🎯 InterviewCoach</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+  </div>
+  <div class="offcanvas-body p-0">
+    <div class="sidebar-nav-mobile">
+      <a href="#chatSection"     class="nav-item-mobile" data-bs-dismiss="offcanvas"><i class="bi bi-chat-dots-fill"></i> AI Coach Chat</a>
+      <a href="#mockSection"     class="nav-item-mobile" data-bs-dismiss="offcanvas"><i class="bi bi-mic-fill"></i> Mock Interview</a>
+      <a href="#resumeSection"   class="nav-item-mobile" data-bs-dismiss="offcanvas"><i class="bi bi-file-earmark-person-fill"></i> Resume Analyzer</a>
+      <a href="#prepSection"     class="nav-item-mobile" data-bs-dismiss="offcanvas"><i class="bi bi-calendar-check-fill"></i> Prep Strategy</a>
+      <a href="#progressSection" class="nav-item-mobile" data-bs-dismiss="offcanvas"><i class="bi bi-graph-up-arrow"></i> Progress</a>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ HERO ═════════════════════════════════════════════════════════ -->
+<section class="hero-section">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-7 hero-content">
+        <div class="hero-badge mb-3">
+          <i class="bi bi-stars me-1"></i> Powered by IBM Watsonx &amp; Granite AI
+        </div>
+        <h1 class="hero-title">Ace Every <span class="gradient-text">Interview</span> with AI Coaching</h1>
+        <p class="hero-subtitle">Practice behavioral, technical, and HR interviews with an AI coach powered by IBM Granite models. Get real-time feedback, scoring, resume analysis, and personalised prep strategies.</p>
+        <div class="d-flex flex-wrap gap-3 mt-4">
+          <a href="#mockSection" class="btn btn-primary-custom btn-lg">
+            <i class="bi bi-mic-fill me-2"></i>Start Mock Interview
+          </a>
+          <a href="#chatSection" class="btn btn-outline-custom btn-lg">
+            <i class="bi bi-chat-dots me-2"></i>Chat with Coach
+          </a>
+        </div>
+        <div class="hero-stats mt-4 d-flex flex-wrap gap-3">
+          <div class="stat-pill"><i class="bi bi-check-circle-fill text-success me-1"></i>Behavioral &amp; Technical</div>
+          <div class="stat-pill"><i class="bi bi-check-circle-fill text-success me-1"></i>Real-time Scoring</div>
+          <div class="stat-pill"><i class="bi bi-check-circle-fill text-success me-1"></i>Resume Analysis</div>
+          <div class="stat-pill"><i class="bi bi-check-circle-fill text-success me-1"></i>Progress Tracking</div>
+        </div>
+      </div>
+      <div class="col-lg-5 d-none d-lg-flex justify-content-center">
+        <div class="hero-visual">
+          <div class="floating-card card-1">
+            <div class="fc-icon">💼</div>
+            <div class="fc-text"><strong>Mock Interview</strong><br><small>Live Q&amp;A session</small></div>
+          </div>
+          <div class="floating-card card-2">
+            <div class="fc-icon">⭐</div>
+            <div class="fc-text"><strong>Score: 88/100</strong><br><small>Great STAR answer!</small></div>
+          </div>
+          <div class="floating-card card-3">
+            <div class="fc-icon">📄</div>
+            <div class="fc-text"><strong>Resume Analyzed</strong><br><small>7 improvements found</small></div>
+          </div>
+          <div class="hero-orb"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ PROFILE SETUP BAR ════════════════════════════════════════════ -->
+<section class="profile-bar-section py-4" id="profileBar">
+  <div class="container">
+    <div class="profile-card">
+      <div class="d-flex align-items-center gap-3 mb-3">
+        <div class="profile-avatar" id="profileAvatar">👤</div>
+        <div>
+          <h5 class="mb-0 fw-bold" id="profileDisplayName">Set up your profile</h5>
+          <small class="text-muted" id="profileDisplaySub">Personalise your coaching session</small>
+        </div>
+        <button class="btn btn-sm btn-outline-custom ms-auto" data-bs-toggle="modal" data-bs-target="#profileModal">
+          <i class="bi bi-pencil-fill me-1"></i>Edit Profile
+        </button>
+      </div>
+      <div class="row g-2" id="profileTags">
+        <div class="col-auto"><span class="profile-tag" id="tagRole"><i class="bi bi-briefcase me-1"></i><span>Role not set</span></span></div>
+        <div class="col-auto"><span class="profile-tag" id="tagDomain"><i class="bi bi-cpu me-1"></i><span>Domain not set</span></span></div>
+        <div class="col-auto"><span class="profile-tag" id="tagDifficulty"><i class="bi bi-bar-chart me-1"></i><span>Mid Level</span></span></div>
+        <div class="col-auto"><span class="profile-tag" id="tagMode"><i class="bi bi-mic me-1"></i><span>Behavioral</span></span></div>
+        <div class="col-auto"><span class="profile-tag" id="tagCompany"><i class="bi bi-building me-1"></i><span>Company not set</span></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ TABS NAV ══════════════════════════════════════════════════════ -->
+<section class="tabs-nav-section py-2" id="tabsNav">
+  <div class="container">
+    <div class="main-tabs d-flex gap-2 flex-wrap" id="mainTabs">
+      <button class="tab-btn active" data-tab="chatSection"><i class="bi bi-chat-dots-fill me-1"></i>AI Coach</button>
+      <button class="tab-btn" data-tab="mockSection"><i class="bi bi-mic-fill me-1"></i>Mock Interview</button>
+      <button class="tab-btn" data-tab="resumeSection"><i class="bi bi-file-earmark-person-fill me-1"></i>Resume</button>
+      <button class="tab-btn" data-tab="prepSection"><i class="bi bi-calendar-check-fill me-1"></i>Prep Strategy</button>
+      <button class="tab-btn" data-tab="progressSection"><i class="bi bi-graph-up-arrow me-1"></i>Progress</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ MAIN CONTENT ══════════════════════════════════════════════════ -->
+<main class="main-content py-4">
+  <div class="container">
+
+    <!-- ── CHAT SECTION ─────────────────────────────────────────────────────── -->
+    <section class="tab-section active" id="chatSection">
+      <div class="row g-4">
+        <div class="col-lg-8">
+          <div class="section-card h-100">
+            <div class="section-header">
+              <div class="d-flex align-items-center gap-2">
+                <div class="section-icon">🤖</div>
+                <div>
+                  <h4 class="mb-0 fw-bold">AI Coach Chat</h4>
+                  <small class="text-muted">Ask anything about interviews, careers, or practice</small>
+                </div>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-secondary-subtle text-secondary py-1.5 px-3 fw-semibold border border-secondary-subtle" id="chatActiveModel">LLM: checking...</span>
+                <button class="btn btn-sm btn-ghost" id="clearChat"><i class="bi bi-trash3 me-1"></i>Clear</button>
+              </div>
+            </div>
+            <div class="chat-window" id="chatWindow">
+              <div class="chat-welcome">
+                <div class="welcome-icon">🎯</div>
+                <h5>Welcome to InterviewCoach!</h5>
+                <p>I'm your AI-powered interview trainer. Ask me to start a mock interview, review your answers, or give you tips for your target role.</p>
+                <div class="quick-prompts">
+                  <button class="quick-prompt-btn" data-prompt="Start a mock behavioral interview for a Software Engineer role">🎭 Mock Behavioral Interview</button>
+                  <button class="quick-prompt-btn" data-prompt="What are the top 10 interview tips I should know?">💡 Top Interview Tips</button>
+                  <button class="quick-prompt-btn" data-prompt="How do I use the STAR method effectively?">⭐ STAR Method Guide</button>
+                  <button class="quick-prompt-btn" data-prompt="What questions should I ask the interviewer?">❓ Questions to Ask</button>
+                </div>
+              </div>
+            </div>
+            <div class="chat-input-area">
+              <div class="chat-input-wrap">
+                <textarea id="chatInput" class="chat-input" placeholder="Ask your coach anything… (Shift+Enter for new line, Enter to send)" rows="1"></textarea>
+                <button class="chat-send-btn" id="sendBtn">
+                  <i class="bi bi-send-fill"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="section-card mb-4">
+            <h5 class="fw-bold mb-3"><i class="bi bi-lightbulb-fill text-warning me-2"></i>Quick Actions</h5>
+            <div class="d-grid gap-2">
+              <button class="btn btn-action" onclick="sendQuick('Tell me about the STAR method and give me an example')"><i class="bi bi-star me-2"></i>STAR Method Guide</button>
+              <button class="btn btn-action" onclick="sendQuick('What are the most common behavioral interview questions for a senior role?')"><i class="bi bi-question-circle me-2"></i>Common Questions</button>
+              <button class="btn btn-action" onclick="sendQuick('How should I negotiate salary after receiving an offer?')"><i class="bi bi-currency-dollar me-2"></i>Salary Negotiation</button>
+              <button class="btn btn-action" onclick="sendQuick('Give me tips for virtual/video interviews')"><i class="bi bi-camera-video me-2"></i>Virtual Interview Tips</button>
+              <button class="btn btn-action" onclick="sendQuick('How do I handle tough interview questions about weaknesses?')"><i class="bi bi-shield-check me-2"></i>Handle Tough Questions</button>
+            </div>
+          </div>
+          <div class="section-card">
+            <h5 class="fw-bold mb-3"><i class="bi bi-info-circle-fill text-info me-2"></i>Session Info</h5>
+            <div class="info-row"><span class="info-label">Messages</span><span class="badge-count" id="msgCount">0</span></div>
+            <div class="info-row"><span class="info-label">Mode</span><span class="info-value" id="infoMode">Chat</span></div>
+            <div class="info-row"><span class="info-label">AI Model</span><span class="info-value text-accent" id="infoModel">checking...</span></div>
+            <div class="info-row"><span class="info-label">Status</span><span class="info-value" id="infoStatus">Ready</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── MOCK INTERVIEW SECTION ─────────────────────────────────────────────── -->
+    <section class="tab-section" id="mockSection">
+      <div class="row g-4">
+        <div class="col-lg-8">
+          <div class="section-card">
+            <div class="section-header">
+              <div class="d-flex align-items-center gap-2">
+                <div class="section-icon">🎭</div>
+                <div>
+                  <h4 class="mb-0 fw-bold">Mock Interview Session</h4>
+                  <small class="text-muted">Practice with AI-generated questions and get instant feedback</small>
+                </div>
+              </div>
+              <span class="badge bg-secondary-subtle text-secondary py-1.5 px-3 fw-semibold border border-secondary-subtle" id="mockActiveModel">LLM: checking...</span>
+            </div>
+
+            <!-- Setup Step -->
+            <div id="mockSetup">
+              <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Interview Mode</label>
+                  <select class="form-select" id="mockMode">
+                    <option value="behavioral">Behavioral</option>
+                    <option value="technical">Technical</option>
+                    <option value="hr_screening">HR Screening</option>
+                    <option value="system_design">System Design</option>
+                    <option value="case_study">Case Study</option>
+                    <option value="situational">Situational</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Number of Questions</label>
+                  <select class="form-select" id="mockCount">
+                    <option value="3">3 questions (Quick)</option>
+                    <option value="5" selected>5 questions (Standard)</option>
+                    <option value="7">7 questions (Extended)</option>
+                    <option value="10">10 questions (Full)</option>
+                  </select>
+                </div>
+              </div>
+              <button class="btn btn-primary-custom w-100 btn-lg" id="startMockBtn">
+                <i class="bi bi-play-circle-fill me-2"></i>Generate Interview Questions
+              </button>
+            </div>
+
+            <!-- Interview Session -->
+            <div id="mockSession" class="d-none">
+              <div class="interview-progress mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="fw-semibold" id="questionCounter">Question 1 of 5</span>
+                  <span class="badge badge-session" id="sessionMode">Behavioral</span>
+                </div>
+                <div class="progress interview-prog-bar">
+                  <div class="progress-bar" id="interviewProgress" role="progressbar" style="width: 20%"></div>
+                </div>
+              </div>
+
+              <div class="question-card mb-4" id="currentQuestion">
+                <div class="q-number">Q1</div>
+                <div class="q-text" id="questionText">Loading question...</div>
+              </div>
+
+              <div class="answer-area mb-3">
+                <label class="form-label fw-semibold">Your Answer <span class="text-muted">(use STAR method)</span></label>
+                <textarea class="form-control answer-textarea" id="answerInput" rows="6" placeholder="Structure your answer using the STAR method:&#10;&#10;Situation: Set the context...&#10;Task: What was your responsibility?&#10;Action: What specific steps did you take?&#10;Result: What was the measurable outcome?"></textarea>
+              </div>
+
+              <div class="d-flex gap-3 flex-wrap">
+                <button class="btn btn-primary-custom flex-fill" id="submitAnswerBtn">
+                  <i class="bi bi-send-fill me-2"></i>Submit &amp; Evaluate
+                </button>
+                <button class="btn btn-outline-custom" id="skipQuestionBtn">
+                  <i class="bi bi-skip-forward-fill me-1"></i>Skip
+                </button>
+              </div>
+            </div>
+
+            <!-- Evaluation Result -->
+            <div id="evalResult" class="d-none mt-4">
+              <div class="eval-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h5 class="fw-bold mb-0"><i class="bi bi-clipboard-check-fill text-success me-2"></i>Evaluation</h5>
+                  <div class="score-badge" id="scoreDisplay">--/100</div>
+                </div>
+                <div class="eval-content" id="evalContent"></div>
+                <div class="d-flex gap-3 mt-4">
+                  <button class="btn btn-primary-custom flex-fill" id="nextQuestionBtn"><i class="bi bi-arrow-right me-2"></i>Next Question</button>
+                  <button class="btn btn-outline-custom" id="retryAnswerBtn"><i class="bi bi-arrow-counterclockwise me-1"></i>Retry</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Session Complete -->
+            <div id="sessionComplete" class="d-none">
+              <div class="complete-card text-center">
+                <div class="complete-icon">🎉</div>
+                <h4 class="fw-bold">Session Complete!</h4>
+                <p class="text-muted">You answered all questions in this session.</p>
+                <div class="session-stats d-flex justify-content-center gap-4 my-4">
+                  <div class="stat-item">
+                    <div class="stat-value" id="finalAvgScore">--</div>
+                    <div class="stat-label">Avg Score</div>
+                  </div>
+                  <div class="stat-item">
+                    <div class="stat-value" id="finalQCount">0</div>
+                    <div class="stat-label">Questions</div>
+                  </div>
+                  <div class="stat-item">
+                    <div class="stat-value" id="finalBestScore">--</div>
+                    <div class="stat-label">Best Score</div>
+                  </div>
+                </div>
+                <div class="d-flex gap-3 justify-content-center">
+                  <button class="btn btn-primary-custom" id="newSessionBtn"><i class="bi bi-plus-circle me-2"></i>New Session</button>
+                  <button class="btn btn-outline-custom" onclick="switchTab('progressSection')"><i class="bi bi-graph-up-arrow me-2"></i>View Progress</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="section-card mb-4">
+            <h5 class="fw-bold mb-3"><i class="bi bi-journal-text text-primary me-2"></i>All Questions</h5>
+            <div id="questionsList" class="questions-list">
+              <p class="text-muted small">Start a session to see questions here</p>
+            </div>
+          </div>
+          <div class="section-card">
+            <h5 class="fw-bold mb-3"><i class="bi bi-star-fill text-warning me-2"></i>STAR Method</h5>
+            <div class="star-guide">
+              <div class="star-item"><span class="star-letter s">S</span><div><strong>Situation</strong><p>Set the scene and context</p></div></div>
+              <div class="star-item"><span class="star-letter t">T</span><div><strong>Task</strong><p>Describe your responsibility</p></div></div>
+              <div class="star-item"><span class="star-letter a">A</span><div><strong>Action</strong><p>Explain steps you took</p></div></div>
+              <div class="star-item"><span class="star-letter r">R</span><div><strong>Result</strong><p>Share the measurable outcome</p></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── RESUME SECTION ──────────────────────────────────────────────────────── -->
+    <section class="tab-section" id="resumeSection">
+      <div class="row g-4">
+        <div class="col-lg-7">
+          <div class="section-card">
+            <div class="section-header">
+              <div class="d-flex align-items-center gap-2">
+                <div class="section-icon">📄</div>
+                <div>
+                  <h4 class="mb-0 fw-bold">Resume Analyzer</h4>
+                  <small class="text-muted">AI-powered feedback and ATS optimization</small>
+                </div>
+              </div>
+              <span class="badge bg-secondary-subtle text-secondary py-1.5 px-3 fw-semibold border border-secondary-subtle" id="resumeActiveModel">LLM: checking...</span>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Paste Resume Text</label>
+              <textarea class="form-control resume-textarea" id="resumeText" rows="14" placeholder="Paste your resume content here...&#10;&#10;Include:&#10;• Work experience&#10;• Education&#10;• Skills&#10;• Projects&#10;• Achievements&#10;&#10;The AI will analyze it for your target role."></textarea>
+            </div>
+            <button class="btn btn-primary-custom w-100" id="analyzeResumeBtn">
+              <i class="bi bi-search me-2"></i>Analyze Resume with AI
+            </button>
+          </div>
+        </div>
+        <div class="col-lg-5">
+          <div class="section-card h-100" id="resumeResultCard">
+            <h5 class="fw-bold mb-3"><i class="bi bi-clipboard-data-fill text-primary me-2"></i>Analysis Results</h5>
+            <div id="resumeResult">
+              <div class="empty-state">
+                <div class="empty-icon">📋</div>
+                <p>Paste your resume and click analyze to get AI-powered feedback</p>
+                <ul class="text-start small text-muted">
+                  <li>ATS compatibility check</li>
+                  <li>Skill gap identification</li>
+                  <li>Improvement suggestions</li>
+                  <li>Role-specific questions from resume</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── PREP STRATEGY SECTION ───────────────────────────────────────────────── -->
+    <section class="tab-section" id="prepSection">
+      <div class="row g-4">
+        <div class="col-lg-5">
+          <div class="section-card">
+            <div class="section-header">
+              <div class="d-flex align-items-center gap-2">
+                <div class="section-icon">📅</div>
+                <div>
+                  <h4 class="mb-0 fw-bold">Preparation Strategy</h4>
+                  <small class="text-muted">Get a personalised study plan</small>
+                </div>
+              </div>
+              <span class="badge bg-secondary-subtle text-secondary py-1.5 px-3 fw-semibold border border-secondary-subtle" id="prepActiveModel">LLM: checking...</span>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Days Until Interview</label>
+              <div class="d-flex align-items-center gap-3">
+                <input type="range" class="form-range flex-fill" id="daysRange" min="1" max="30" value="7">
+                <span class="days-badge" id="daysDisplay">7 days</span>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Focus Areas</label>
+              <div class="focus-chips" id="focusChips">
+                <label class="focus-chip"><input type="checkbox" value="behavioral" checked> Behavioral</label>
+                <label class="focus-chip"><input type="checkbox" value="technical"> Technical</label>
+                <label class="focus-chip"><input type="checkbox" value="system_design"> System Design</label>
+                <label class="focus-chip"><input type="checkbox" value="company_research" checked> Company Research</label>
+                <label class="focus-chip"><input type="checkbox" value="salary_negotiation"> Salary Negotiation</label>
+              </div>
+            </div>
+            <button class="btn btn-primary-custom w-100" id="generateStrategyBtn">
+              <i class="bi bi-calendar3 me-2"></i>Generate Prep Plan
+            </button>
+          </div>
+        </div>
+        <div class="col-lg-7">
+          <div class="section-card h-100">
+            <h5 class="fw-bold mb-3"><i class="bi bi-map-fill text-success me-2"></i>Your Preparation Roadmap</h5>
+            <div id="strategyResult">
+              <div class="empty-state">
+                <div class="empty-icon">🗺️</div>
+                <p>Set your timeline and generate a personalised prep strategy</p>
+                <p class="small text-muted">The AI will create a day-by-day study plan tailored to your target role, domain, and experience level.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── PROGRESS SECTION ────────────────────────────────────────────────────── -->
+    <section class="tab-section" id="progressSection">
+      <div class="row g-4 mb-4">
+        <div class="col-6 col-lg-3">
+          <div class="metric-card">
+            <div class="metric-icon">🎯</div>
+            <div class="metric-value" id="metTotalSessions">0</div>
+            <div class="metric-label">Sessions</div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="metric-card">
+            <div class="metric-icon">❓</div>
+            <div class="metric-value" id="metTotalQuestions">0</div>
+            <div class="metric-label">Questions</div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="metric-card accent">
+            <div class="metric-icon">⭐</div>
+            <div class="metric-value" id="metAvgScore">--</div>
+            <div class="metric-label">Avg Score</div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="metric-card success">
+            <div class="metric-icon">🏆</div>
+            <div class="metric-value" id="metBestScore">--</div>
+            <div class="metric-label">Best Score</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-lg-8">
+          <div class="section-card">
+            <div class="section-header">
+              <h5 class="fw-bold mb-0"><i class="bi bi-graph-up-arrow text-primary me-2"></i>Score History</h5>
+              <button class="btn btn-sm btn-ghost" id="clearProgressBtn"><i class="bi bi-trash3"></i></button>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="scoreChart" height="220"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="section-card">
+            <h5 class="fw-bold mb-3"><i class="bi bi-bar-chart-fill text-warning me-2"></i>Performance by Mode</h5>
+            <div class="chart-wrap" style="max-height:220px">
+              <canvas id="modeChart" height="200"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-4 mt-0">
+        <div class="col-12">
+          <div class="section-card">
+            <h5 class="fw-bold mb-3"><i class="bi bi-clock-history text-muted me-2"></i>Session History</h5>
+            <div id="sessionHistory">
+              <div class="empty-state">
+                <div class="empty-icon">📊</div>
+                <p>Complete mock interview sessions to see your history here</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /container -->
+</main>
+
+<!-- ═══════════ PROFILE MODAL ════════════════════════════════════════════════ -->
+<div class="modal fade" id="profileModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold"><i class="bi bi-person-badge-fill me-2"></i>Your Interview Profile</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Your Name</label>
+            <input type="text" class="form-control" id="profileName" placeholder="e.g. Priya Sharma">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Target Role / Job Title</label>
+            <input type="text" class="form-control" id="profileRole" placeholder="e.g. Senior Software Engineer">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Domain / Industry</label>
+            <select class="form-select" id="profileDomain">
+              <option value="software_engineering">Software Engineering</option>
+              <option value="data_science">Data Science / ML</option>
+              <option value="product_management">Product Management</option>
+              <option value="devops_cloud">DevOps / Cloud</option>
+              <option value="cybersecurity">Cybersecurity</option>
+              <option value="finance_banking">Finance / Banking</option>
+              <option value="marketing">Marketing</option>
+              <option value="human_resources">Human Resources</option>
+              <option value="consulting">Consulting</option>
+              <option value="general">General / Other</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Years of Experience</label>
+            <input type="text" class="form-control" id="profileExperience" placeholder="e.g. 4 years">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Difficulty Level</label>
+            <select class="form-select" id="profileDifficulty">
+              <option value="entry_level">Entry Level (0-2 yrs)</option>
+              <option value="mid_level" selected>Mid Level (3-5 yrs)</option>
+              <option value="senior">Senior (6-10 yrs)</option>
+              <option value="lead">Lead / Principal (10+ yrs)</option>
+              <option value="executive">Executive / Director</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Default Interview Mode</label>
+            <select class="form-select" id="profileMode">
+              <option value="behavioral">Behavioral</option>
+              <option value="technical">Technical</option>
+              <option value="hr_screening">HR Screening</option>
+              <option value="system_design">System Design</option>
+              <option value="case_study">Case Study</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Target Company</label>
+            <input type="text" class="form-control" id="profileCompany" placeholder="e.g. Google, IBM, Infosys">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Interview Round</label>
+            <select class="form-select" id="profileRound">
+              <option value="General">General Practice</option>
+              <option value="Phone Screen">Phone Screen</option>
+              <option value="Technical Round 1">Technical Round 1</option>
+              <option value="Technical Round 2">Technical Round 2</option>
+              <option value="System Design Round">System Design Round</option>
+              <option value="Behavioral / HR">Behavioral / HR</option>
+              <option value="Final Round">Final Round</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary-custom" id="saveProfileBtn" data-bs-dismiss="modal">
+          <i class="bi bi-check-circle-fill me-2"></i>Save Profile
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SETTINGS MODAL ════════════════════════════════════════════════ -->
+<div class="modal fade" id="settingsModal" tabindex="-1">
+  <div class="modal-dialog modal-md modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold"><i class="bi bi-gear-fill me-2"></i>LLM Settings &amp; Fallbacks</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">LLM Provider Mode</label>
+          <select class="form-select" id="settingsProvider">
+            <option value="auto">Auto-detect (Watsonx &rarr; Hugging Face)</option>
+            <option value="watsonx">IBM Watsonx (Primary)</option>
+            <option value="huggingface">Hugging Face Serverless (Fallback)</option>
+            <option value="demo">Static Demo Mode (Fallback)</option>
+          </select>
+          <div class="form-text">In Auto-detect mode, the system cascades down the providers if one fails or is unconfigured.</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Hugging Face API Token</label>
+          <input type="password" class="form-control" id="settingsHfKey" placeholder="hf_...">
+          <div class="form-text">Used when Hugging Face is explicitly selected, or as a secondary fallback.</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Hugging Face Model ID</label>
+          <input type="text" class="form-control" id="settingsHfModel" value="meta-llama/Llama-3.3-70B-Instruct">
+        </div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary-custom" id="saveSettingsBtn" data-bs-dismiss="modal">
+          <i class="bi bi-check-circle-fill me-2"></i>Save Settings
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ LOADING OVERLAY ═══════════════════════════════════════════════ -->
+<div class="loading-overlay d-none" id="loadingOverlay">
+  <div class="loading-content">
+    <div class="loading-spinner"></div>
+    <p id="loadingText">Thinking...</p>
+  </div>
+</div>
+
+<!-- ═══════════ FOOTER ════════════════════════════════════════════════════════ -->
+<footer class="app-footer">
+  <div class="container text-center">
+    <p class="footer-text">InterviewCoach &mdash; AI-powered with <strong>IBM Watsonx</strong> &amp; Granite models &mdash; <span id="currentYear"></span></p>
+    <p class="footer-sub">AI coaching is a supplement, not a replacement, for professional career guidance.</p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>
