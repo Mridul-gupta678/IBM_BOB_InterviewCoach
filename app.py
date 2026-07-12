@@ -12,7 +12,7 @@ import requests
 import uuid
 from datetime import datetime
 from dotenv import load_dotenv
-from flask import Flask, request, jsonify, render_template, session
+from flask import Flask, request, jsonify, render_template, session, g
 from flask_cors import CORS
 from ibm_watsonx_ai import Credentials
 from ibm_watsonx_ai.foundation_models import ModelInference
@@ -272,9 +272,9 @@ def generate_huggingface_text(messages: list, api_key: str, model_id: str = "Qwe
                     generated = result[0].get("generated_text", "")
                     if generated.startswith(prompt):
                         generated = generated[len(prompt):].strip()
-                    return generated
+                    return generated, model
                 elif isinstance(result, dict) and "generated_text" in result:
-                    return result["generated_text"]
+                    return result["generated_text"], model
             except Exception as e:
                 app.logger.warning(f"HF endpoint {url} for model {model} failed: {e}")
                 last_err = e
@@ -285,6 +285,7 @@ def get_llm_generation(messages: list, data: dict) -> tuple[str, str]:
     """
     Generate response based on selected provider using chat templates.
     Returns (generated_text, active_provider).
+    Also sets flask.g.actual_model.
     """
     provider = data.get("llm_provider") or os.getenv("LLM_PROVIDER") or "auto"
     
@@ -313,38 +314,66 @@ def get_llm_generation(messages: list, data: dict) -> tuple[str, str]:
     # Explicit provider check
     if provider == "watsonx":
         try:
-            return try_watsonx(), "watsonx"
+            res = try_watsonx()
+            try:
+                g.actual_model = watsonx_model_id
+            except Exception:
+                pass
+            return res, "watsonx"
         except Exception as e:
             app.logger.warning(f"Watsonx explicit request failed: {e}")
             errors.append(f"Watsonx: {e}")
             
     elif provider == "huggingface":
         try:
-            return try_huggingface(), "huggingface"
+            res_txt, res_model = try_huggingface()
+            try:
+                g.actual_model = res_model
+            except Exception:
+                pass
+            return res_txt, "huggingface"
         except Exception as e:
             app.logger.warning(f"Hugging Face explicit request failed: {e}")
             errors.append(f"Hugging Face: {e}")
             
     elif provider == "demo":
+        try:
+            g.actual_model = "demo"
+        except Exception:
+            pass
         return "", "demo"
 
     # Cascade / Auto fallbacks
     if watsonx_api_key and watsonx_project_id and "Watsonx" not in str(errors):
         try:
-            return try_watsonx(), "watsonx"
+            res = try_watsonx()
+            try:
+                g.actual_model = watsonx_model_id
+            except Exception:
+                pass
+            return res, "watsonx"
         except Exception as e:
             app.logger.warning(f"Fallback Watsonx failed: {e}")
             errors.append(f"Watsonx: {e}")
 
     if hf_api_key and "Hugging Face" not in str(errors):
         try:
-            return try_huggingface(), "huggingface"
+            res_txt, res_model = try_huggingface()
+            try:
+                g.actual_model = res_model
+            except Exception:
+                pass
+            return res_txt, "huggingface"
         except Exception as e:
             app.logger.warning(f"Fallback Hugging Face failed: {e}")
             errors.append(f"Hugging Face: {e}")
 
     if errors:
         app.logger.error(f"All LLM generation paths failed: {errors}. Falling back to Demo mode.")
+    try:
+        g.actual_model = "demo"
+    except Exception:
+        pass
     return "", "demo"
 
 
@@ -563,7 +592,7 @@ def chat():
         
         # Get active model ID
         model_key = f"{provider.upper()}_MODEL_ID"
-        model_name = data.get(f"{provider}_model_id") or os.getenv(model_key, "unknown")
+        model_name = g.get("actual_model") or data.get(f"{provider}_model_id") or os.getenv(model_key, "unknown")
         
         return jsonify({
             "response":  response,
@@ -631,7 +660,7 @@ def generate_questions():
 
         if not questions:
             return jsonify({"error": "Model returned empty response. Please try again."}), 500
-        return jsonify({"questions": questions, "mode": provider, "count": count})
+        return jsonify({"questions": questions, "mode": provider, "count": count, "model": g.get("actual_model")})
     except Exception as exc:
         app.logger.error(f"Question generation error: {exc}")
         return jsonify({"error": str(exc)}), 500
@@ -706,7 +735,7 @@ def evaluate_answer():
 
         if not evaluation:
             return jsonify({"error": "Model returned empty response."}), 500
-        return jsonify({"evaluation": evaluation, "mode": provider})
+        return jsonify({"evaluation": evaluation, "mode": provider, "model": g.get("actual_model")})
     except Exception as exc:
         app.logger.error(f"Answer evaluation error: {exc}")
         return jsonify({"error": str(exc)}), 500
@@ -793,7 +822,7 @@ def analyze_resume():
 
         if not analysis:
             return jsonify({"error": "Model returned empty response."}), 500
-        return jsonify({"analysis": analysis, "mode": provider})
+        return jsonify({"analysis": analysis, "mode": provider, "model": g.get("actual_model")})
     except Exception as exc:
         app.logger.error(f"Resume analysis error: {exc}")
         return jsonify({"error": str(exc)}), 500
@@ -861,7 +890,7 @@ def prep_strategy():
 
         if not strategy:
             return jsonify({"error": "Model returned empty response."}), 500
-        return jsonify({"strategy": strategy, "mode": provider})
+        return jsonify({"strategy": strategy, "mode": provider, "model": g.get("actual_model")})
     except Exception as exc:
         app.logger.error(f"Prep strategy error: {exc}")
         return jsonify({"error": str(exc)}), 500
@@ -976,6 +1005,18 @@ def debug_llm():
             hf_endpoints_status[name] = f"Status: {r.status_code}, Body: {r.text[:120]}"
         except Exception as e:
             hf_endpoints_status[name] = f"Error: {e}"
+
+    # Also test the default fallback models
+    for fb_model in ["Qwen/Qwen2.5-7B-Instruct", "meta-llama/Llama-3.3-70B-Instruct"]:
+        fb_url = f"https://router.huggingface.co/hf-inference/models/{fb_model}"
+        fb_prompt = format_prompt_for_model([{"role": "user", "content": "Hello"}], fb_model)
+        try:
+            headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+            payload = {"inputs": fb_prompt, "parameters": {"max_new_tokens": 10, "temperature": 0.7}}
+            r = requests.post(fb_url, headers=headers, json=payload, timeout=8)
+            hf_endpoints_status[f"fallback_{fb_model.replace('/', '_')}"] = f"Status: {r.status_code}, Body: {r.text[:120]}"
+        except Exception as e:
+            hf_endpoints_status[f"fallback_{fb_model.replace('/', '_')}"] = f"Error: {e}"
 
     return jsonify({
         "watsonx": watsonx_err,
