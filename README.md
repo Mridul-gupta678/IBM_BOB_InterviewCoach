@@ -5,19 +5,39 @@
 
 ---
 
-## ✨ Features
+## 💻 What the App Does & Capabilities
 
-| Feature | Description |
-|---|---|
-| 🤖 **AI Coach Chat** | Conversational coaching powered by IBM Granite or Llama 3 models |
-| 🎭 **Mock Interview** | Specialized behavioral, technical, HR, system design, and case study sessions |
-| 📊 **Real-time Scoring** | Answer evaluation with 0-100 scoring and detailed STAR method feedback |
-| 📄 **Resume Analyzer** | ATS compatibility check, skill gap identification, and optimization recommendations |
-| 🗓️ **Prep Strategy** | Personalized day-by-day study roadmap tailored to your timeline and target role |
-| 🔌 **Hugging Face Fallback** | Automatic serverless fallback option if Watsonx limits are reached or credentials are unconfigured |
-| 🎛️ **Live Model Badges** | Dynamic header status displays and Session Info panel showing the active model in real-time |
-| 📈 **Progress Tracking** | Performance history charts and mock interview session scoring metrics |
-| 🌙 **Dark Mode** | Harmony color themes with persistent dark/light preferences |
+### 1. 🤖 AI Coach Chat
+* **Interactive Chat Sandbox**: Engage in open-ended conversations with a responsive AI coach to brainstorm interview questions, draft elevator pitches, or ask for career advice.
+* **Context-Aware Prompts**: The backend dynamically formats system prompts using the user's Profile details (Industry, Target Role, Experience Level, and Interview Type) so that the AI's tone and domain knowledge precisely match your goals.
+* **Markdown Support**: Chat messages are parsed in real-time, supporting bulleted points, bolded headings, and code blocks with clean, styled padding.
+
+### 2. 🎭 Mock Interview Simulator
+* **Custom Session Setup**: Select the interview focus (Behavioral, Technical, HR, System Design, or Case Study) and specify the exact number of questions (up to 10).
+* **Sequential Question Delivery**: Simulates a live interview by presenting questions one-by-one to replicate the pacing of a real interview.
+* **Real-time Grading & STAR Feedback**: Each answer is evaluated by the AI, producing an overall score (0-100) and structured feedback matching the **STAR** framework (Situation, Task, Action, Result) to pinpoint exactly where your response can be strengthened.
+
+### 3. 📄 ATS Resume Analyzer
+* **ATS Compatibility Grading**: Compares your resume against a target job description to estimate automated screening compatibility.
+* **Skill Gap Analysis**: Highlights missing core keywords and skills that recruiters look for in similar postings.
+* **Actionable Optimizations**: Delivers concrete suggestions to refine bullet points, adjust formats, and increase keyword matches.
+
+### 4. 🗓️ Prep Strategy Roadmap
+* **Personalized Timelines**: Enter your target interview date to build a custom study strategy.
+* **Daily Action Plans**: Generates structured, day-by-day study roadmaps outlining technical concepts to review, practice questions to write, and behavioral scenarios to prepare.
+
+### 5. 🔌 Advanced LLM Orchestration & Fallback Cascade
+* **Intelligent Auto-Detect**: When set to "Auto-detect", the system cascades through providers automatically (IBM Watsonx $\rightarrow$ Hugging Face router $\rightarrow$ Static Demo) to ensure maximum uptime.
+* **Explicit Provider Protection**: If a specific LLM mode (Watsonx or Hugging Face) is explicitly selected, the cascade is disabled. Any API key or connection issues immediately report an "API not connected" error UI, complete with a red status warning dot, so you know exactly which gateway failed.
+* **Dynamic Status Badges**: Sidebar info cards and header badges update in real-time on every response, showing the exact LLM provider and model ID that generated the output.
+
+### 6. 📈 Progress Tracking & Analytics
+* **Performance Charts**: An interactive chart built with Chart.js displays your scoring trajectory over mock sessions.
+* **Historical Metrics**: Track total messages, average evaluation scores, and overall interview readiness levels.
+
+### 7. 🌙 Premium Default Dark Mode
+* **Modern Interface**: Designed with glassmorphism panels, tailored HSL color palettes, and smooth hover micro-animations.
+* **Persistent Preferences**: Defaults to Dark Mode on first load, with a top-right toggle button to switch modes instantly.
 
 ---
 
