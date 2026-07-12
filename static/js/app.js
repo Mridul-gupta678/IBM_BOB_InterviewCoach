@@ -26,40 +26,112 @@ const $ = id => document.getElementById(id);
 // ── Markdown renderer (lightweight) ──────────────────────────────────────────
 function renderMarkdown(text) {
   if (!text) return "";
-  let html = text
-    // Escape HTML entities first
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-    // Headings
-    .replace(/^##### (.+)$/gm,  "<h5>$1</h5>")
-    .replace(/^#### (.+)$/gm,   "<h5>$1</h5>")
-    .replace(/^### (.+)$/gm,    "<h4>$1</h4>")
-    .replace(/^## (.+)$/gm,     "<h3>$1</h3>")
-    .replace(/^# (.+)$/gm,      "<h2>$1</h2>")
-    // Bold & italic
-    .replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>")
-    .replace(/\*\*(.+?)\*\*/g,     "<strong>$1</strong>")
-    .replace(/\*(.+?)\*/g,         "<em>$1</em>")
-    // Inline code
-    .replace(/`([^`]+)`/g, "<code>$1</code>")
+  
+  let escaped = text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+    
+  let lines = escaped.split(/\r?\n/);
+  let html = [];
+  let inList = false;
+  let listType = null;
+  let currentPara = [];
+  
+  function closeList() {
+    if (inList) {
+      html.push(`</${listType}>`);
+      inList = false;
+      listType = null;
+    }
+  }
+  
+  function parseInline(str) {
+    return str
+      .replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>")
+      .replace(/\*\*(.+?)\*\*/g,     "<strong>$1</strong>")
+      .replace(/\*(.+?)\*/g,         "<em>$1</em>")
+      .replace(/`([^`]+)`/g, "<code>$1</code>");
+  }
+  
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i].trim();
+    
+    // Flush paragraphs when starting structural block
+    if (line === "" || line === "---" || line.match(/^(#{1,6})\s+/) || line.startsWith("&gt;") || line.match(/^([-*•])\s+/) || line.match(/^(\d+)\.\s+/)) {
+      if (currentPara.length > 0) {
+        html.push(`<p>${currentPara.join("<br>")}</p>`);
+        currentPara = [];
+      }
+    }
+    
     // Horizontal rule
-    .replace(/^---$/gm, "<hr>")
+    if (line === "---") {
+      closeList();
+      html.push("<hr>");
+      continue;
+    }
+    
+    // Headings
+    let headerMatch = line.match(/^(#{1,6})\s+(.+)$/);
+    if (headerMatch) {
+      closeList();
+      let depth = headerMatch[1].length;
+      let tag = depth === 1 ? "h2" : (depth === 2 ? "h3" : (depth === 3 ? "h4" : "h5"));
+      html.push(`<${tag}>${parseInline(headerMatch[2])}</${tag}>`);
+      continue;
+    }
+    
     // Blockquote
-    .replace(/^&gt; (.+)$/gm, "<blockquote>$1</blockquote>")
-    // Unordered list items
-    .replace(/^[-*•] (.+)$/gm, "<li>$1</li>")
-    // Ordered list items
-    .replace(/^\d+\. (.+)$/gm, "<li>$1</li>")
-    // Line breaks → paragraphs
-    .split(/\n\n+/)
-    .map(block => {
-      block = block.trim();
-      if (!block) return "";
-      if (block.startsWith("<h") || block.startsWith("<hr") || block.startsWith("<blockquote")) return block;
-      if (block.includes("<li>")) return `<ul>${block}</ul>`;
-      return `<p>${block.replace(/\n/g, "<br>")}</p>`;
-    })
-    .join("\n");
-  return `<div class="md-content">${html}</div>`;
+    if (line.startsWith("&gt;")) {
+      closeList();
+      let content = line.substring(4).trim();
+      html.push(`<blockquote>${parseInline(content)}</blockquote>`);
+      continue;
+    }
+    
+    // Unordered list item
+    let ulMatch = line.match(/^([-*•])\s+(.+)$/);
+    if (ulMatch) {
+      if (!inList || listType !== "ul") {
+        closeList();
+        html.push("<ul>");
+        inList = true;
+        listType = "ul";
+      }
+      html.push(`<li>${parseInline(ulMatch[2])}</li>`);
+      continue;
+    }
+    
+    // Ordered list item
+    let olMatch = line.match(/^(\d+)\.\s+(.+)$/);
+    if (olMatch) {
+      if (!inList || listType !== "ol") {
+        closeList();
+        html.push("<ol>");
+        inList = true;
+        listType = "ol";
+      }
+      html.push(`<li>${parseInline(olMatch[2])}</li>`);
+      continue;
+    }
+    
+    if (line === "") {
+      closeList();
+      continue;
+    }
+    
+    // Regular text line
+    closeList();
+    currentPara.push(parseInline(line));
+  }
+  
+  if (currentPara.length > 0) {
+    html.push(`<p>${currentPara.join("<br>")}</p>`);
+  }
+  closeList();
+  
+  return `<div class="md-content">${html.join("\n")}</div>`;
 }
 
 // ── API helpers ───────────────────────────────────────────────────────────────
