@@ -911,6 +911,42 @@ def health():
 
 
 
+# ── Diagnostics ────────────────────────────────────────────────────────────────
+@app.route("/api/debug-llm")
+def debug_llm():
+    watsonx_err = None
+    hf_err = None
+    
+    # Test Watsonx
+    try:
+        model = get_watsonx_model()
+        if model is None:
+            watsonx_err = "Credentials not configured (model is None)"
+        else:
+            prompt = format_prompt_for_model([{"role": "user", "content": "Hello"}], os.getenv("WATSONX_MODEL_ID", ""))
+            model.generate_text(prompt=prompt)
+            watsonx_err = "Success!"
+    except Exception as e:
+        watsonx_err = f"Error: {str(e)}"
+
+    # Test Hugging Face
+    try:
+        api_key = os.getenv("HUGGINGFACE_API_KEY")
+        model_id = os.getenv("HUGGINGFACE_MODEL_ID", "meta-llama/Llama-3.3-70B-Instruct")
+        if not api_key:
+            hf_err = "Hugging Face API key not configured"
+        else:
+            generate_huggingface_text([{"role": "user", "content": "Hello"}], api_key, model_id)
+            hf_err = "Success!"
+    except Exception as e:
+        hf_err = f"Error: {str(e)}"
+
+    return jsonify({
+        "watsonx": watsonx_err,
+        "huggingface": hf_err
+    })
+
+
 # ── Agent info ─────────────────────────────────────────────────────────────────
 @app.route("/api/agent-info")
 def agent_info():
