@@ -238,47 +238,38 @@ def build_chat_messages(user_message: str, chat_history: list, user_profile: dic
     messages.append({"role": "user", "content": user_message})
     return messages
 
-def generate_huggingface_text(messages: list, api_key: str, model_id: str = "Qwen/Qwen2.5-7B-Instruct") -> str:
-    prompt = format_prompt_for_model(messages, model_id)
+def generate_huggingface_text(messages: list, api_key: str, model_id: str = "Qwen/Qwen2.5-7B-Instruct") -> tuple[str, str]:
     models_to_try = [model_id]
     if model_id != "Qwen/Qwen2.5-7B-Instruct":
         models_to_try.append("Qwen/Qwen2.5-7B-Instruct")
         
     last_err = None
     for model in models_to_try:
-        endpoints = [
-            f"https://router.huggingface.co/hf-inference/models/{model}",
-            f"https://api-inference.huggingface.co/models/{model}",
-            f"https://api.huggingface.co/models/{model}"
-        ]
-        
-        for url in endpoints:
-            headers = {
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json"
-            }
-            payload = {
-                "inputs": prompt,
-                "parameters": {
-                    "max_new_tokens": int(os.getenv("MAX_NEW_TOKENS", 1200)),
-                    "temperature": 0.7
-                }
-            }
-            try:
-                response = requests.post(url, headers=headers, json=payload, timeout=12)
-                response.raise_for_status()
-                result = response.json()
-                if isinstance(result, list) and len(result) > 0:
-                    generated = result[0].get("generated_text", "")
-                    if generated.startswith(prompt):
-                        generated = generated[len(prompt):].strip()
-                    return generated, model
-                elif isinstance(result, dict) and "generated_text" in result:
-                    return result["generated_text"], model
-            except Exception as e:
-                app.logger.warning(f"HF endpoint {url} for model {model} failed: {e}")
-                last_err = e
-                
+        url = "https://router.huggingface.co/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "model": model,
+            "messages": messages,
+            "max_tokens": int(os.getenv("MAX_NEW_TOKENS", 1200)),
+            "temperature": 0.7
+        }
+        try:
+            response = requests.post(url, headers=headers, json=payload, timeout=15)
+            response.raise_for_status()
+            result = response.json()
+            choices = result.get("choices", [])
+            if choices:
+                content = choices[0].get("message", {}).get("content", "")
+                if content:
+                    return content.strip(), model
+            raise ValueError(f"Unexpected response payload format: {result}")
+        except Exception as e:
+            app.logger.warning(f"HF router chat completions failed for model {model}: {e}")
+            last_err = e
+            
     raise RuntimeError(f"Hugging Face API call failed: {last_err}")
 
 def get_llm_generation(messages: list, data: dict) -> tuple[str, str]:
