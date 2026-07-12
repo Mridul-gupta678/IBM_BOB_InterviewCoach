@@ -1034,29 +1034,34 @@ def debug_llm():
             hf_endpoints_status[f"v1_chat_{model_name.replace('/', '_')}"] = f"Status: {r.status_code}, Body: {r.text[:120]}"
         except Exception as e:
             hf_endpoints_status[f"v1_chat_{model_name.replace('/', '_')}"] = f"Error: {e}"
-    # Test CloudFront IP-based Host header routing
+    # Test InferenceClient from huggingface_hub
     try:
-        hf_co_ip = socket.gethostbyname("huggingface.co")
-        dns_resolved["huggingface_co_IP"] = hf_co_ip
-        
-        import urllib3
-        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-        
-        target_model = "Qwen/Qwen2.5-7B-Instruct"
-        url = f"https://{hf_co_ip}/models/{target_model}"
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-            "Host": "api-inference.huggingface.co"
-        }
-        payload = {
-            "inputs": format_prompt_for_model([{"role": "user", "content": "Hello"}], target_model),
-            "parameters": {"max_new_tokens": 10, "temperature": 0.7}
-        }
-        r = requests.post(url, headers=headers, json=payload, timeout=8, verify=False)
-        hf_endpoints_status["cloudfront_ip_routing_test"] = f"Status: {r.status_code}, Body: {r.text[:120]}"
+        from huggingface_hub import InferenceClient
+        client = InferenceClient(token=api_key)
+        res = client.chat_completion(
+            messages=[{"role": "user", "content": "Hello"}],
+            model="Qwen/Qwen2.5-7B-Instruct",
+            max_tokens=10
+        )
+        hf_endpoints_status["InferenceClient_chat"] = f"Success: {res.choices[0].message.content}"
     except Exception as e:
-        hf_endpoints_status["cloudfront_ip_routing_test"] = f"Error: {e}"
+        hf_endpoints_status["InferenceClient_chat"] = f"Error: {e}"
+
+    # Test base router v1 completions (without provider name)
+    try:
+        r = requests.post(
+            "https://router.huggingface.co/v1/chat/completions",
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            json={
+                "model": "Qwen/Qwen2.5-7B-Instruct",
+                "messages": [{"role": "user", "content": "Hello"}],
+                "max_tokens": 10
+            },
+            timeout=8
+        )
+        hf_endpoints_status["base_router_v1_chat"] = f"Status: {r.status_code}, Body: {r.text[:120]}"
+    except Exception as e:
+        hf_endpoints_status["base_router_v1_chat"] = f"Error: {e}"
     return jsonify({
         "watsonx": watsonx_err,
         "huggingface_endpoints": hf_endpoints_status,
