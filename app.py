@@ -920,6 +920,16 @@ def debug_llm():
     watsonx_err = None
     hf_err = None
     
+    # Test DNS resolution
+    import socket
+    dns_resolved = {}
+    for host in ["iam.cloud.ibm.com", "au-syd.ml.cloud.ibm.com", "api-inference.huggingface.co", "huggingface.co", "google.com"]:
+        try:
+            ip = socket.gethostbyname(host)
+            dns_resolved[host] = ip
+        except Exception as e:
+            dns_resolved[host] = f"Error: {e}"
+
     # Test Watsonx
     try:
         model = get_watsonx_model()
@@ -947,6 +957,7 @@ def debug_llm():
     return jsonify({
         "watsonx": watsonx_err,
         "huggingface": hf_err,
+        "dns": dns_resolved,
         "env_keys": {
             "has_ibm_key": os.getenv("IBM_API_KEY") is not None,
             "has_project_id": os.getenv("WATSONX_PROJECT_ID") is not None,
