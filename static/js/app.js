@@ -982,6 +982,8 @@ function initSettings() {
   localStorage.setItem("itc-settings", JSON.stringify(settings));
   populateSettingsModal(settings);
 
+  $("settingsProvider").addEventListener("change", toggleSettingsFields);
+
   $("saveSettingsBtn").addEventListener("click", () => {
     const newSettings = {
       llm_provider:        $("settingsProvider").value || "auto",
@@ -993,10 +995,23 @@ function initSettings() {
   });
 }
 
+function toggleSettingsFields() {
+  const provider = $("settingsProvider").value;
+  const hfContainer = $("hfSettingsContainer");
+  if (hfContainer) {
+    if (provider === "huggingface") {
+      hfContainer.style.display = "block";
+    } else {
+      hfContainer.style.display = "none";
+    }
+  }
+}
+
 function populateSettingsModal(s) {
   $("settingsProvider").value = s.llm_provider || "auto";
   $("settingsHfKey").value = s.huggingface_api_key || "";
   $("settingsHfModel").value = s.huggingface_model_id || "meta-llama/Llama-3.3-70B-Instruct";
+  toggleSettingsFields();
 }
 
 // ═════════════════════════════════════════════════════════════════════════════

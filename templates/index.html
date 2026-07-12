@@ -617,14 +617,16 @@
             <option value="demo">Static Demo Mode (Fallback)</option>
           </select>
           <div class="form-text">In Auto-detect mode, the system cascades down the providers if one fails or is unconfigured.</div>
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Hugging Face API Token</label>
-          <input type="password" class="form-control" id="settingsHfKey" placeholder="hf_...">
-          <div class="form-text">Used when Hugging Face is explicitly selected, or as a secondary fallback.</div>
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Hugging Face Model ID</label>
-          <input type="text" class="form-control" id="settingsHfModel" value="meta-llama/Llama-3.3-70B-Instruct">
+        <div id="hfSettingsContainer">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Hugging Face API Token</label>
+            <input type="password" class="form-control" id="settingsHfKey" placeholder="hf_...">
+            <div class="form-text">Used when Hugging Face is explicitly selected, or as a secondary fallback.</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Hugging Face Model ID</label>
+            <input type="text" class="form-control" id="settingsHfModel" value="meta-llama/Llama-3.3-70B-Instruct">
+          </div>
         </div>
       </div>
       <div class="modal-footer border-0">
