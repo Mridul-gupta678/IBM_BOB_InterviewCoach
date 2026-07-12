@@ -163,6 +163,22 @@ function showLoading(text = "Thinking…") {
 }
 function hideLoading() { $("loadingOverlay").classList.add("d-none"); }
 
+const BUTTON_STATES = {};
+function startButtonLoading(id, text) {
+  const btn = $(id);
+  if (!btn) return;
+  BUTTON_STATES[id] = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>${text}`;
+}
+function stopButtonLoading(id) {
+  const btn = $(id);
+  if (!btn || !BUTTON_STATES[id]) return;
+  btn.disabled = false;
+  btn.innerHTML = BUTTON_STATES[id];
+  delete BUTTON_STATES[id];
+}
+
 // ═════════════════════════════════════════════════════════════════════════════
 //  DARK MODE
 // ═════════════════════════════════════════════════════════════════════════════
@@ -454,6 +470,7 @@ async function startMockSession() {
   STATE.sessionScores = [];
   STATE.currentQIndex = 0;
 
+  startButtonLoading("startMockBtn", "Generating Questions...");
   showLoading("Generating interview questions…");
   try {
     const data = await apiPost("/api/generate-questions", {
@@ -461,7 +478,6 @@ async function startMockSession() {
       mode,
       count,
     });
-    hideLoading();
     updateActiveModelUI(data.mode, data.model);
 
     // Parse questions from text (split on numbered lines)
@@ -476,9 +492,11 @@ async function startMockSession() {
     renderQuestionsList();
     loadQuestion(0);
   } catch (err) {
-    hideLoading();
     showToast(`Error: ${err.message}`, "danger");
     reportAPIError(err.message);
+  } finally {
+    stopButtonLoading("startMockBtn");
+    hideLoading();
   }
 }
 
@@ -560,6 +578,7 @@ async function submitAnswer() {
   }
 
   const question = STATE.mockQuestions[STATE.currentQIndex];
+  startButtonLoading("submitAnswerBtn", "Evaluating...");
   showLoading("Evaluating your answer…");
 
   try {
@@ -568,13 +587,14 @@ async function submitAnswer() {
       answer,
       profile: STATE.profile,
     });
-    hideLoading();
     updateActiveModelUI(data.mode, data.model);
     showEvaluation(data.evaluation || "No evaluation returned.");
   } catch (err) {
-    hideLoading();
     showToast(`Evaluation error: ${err.message}`, "danger");
     reportAPIError(err.message);
+  } finally {
+    stopButtonLoading("submitAnswerBtn");
+    hideLoading();
   }
 }
 
@@ -675,13 +695,13 @@ async function analyzeResume() {
     return;
   }
 
+  startButtonLoading("analyzeResumeBtn", "Analyzing...");
   showLoading("Analyzing your resume with AI…");
   try {
     const data = await apiPost("/api/analyze-resume", {
       resume_text: text,
       profile:     STATE.profile,
     });
-    hideLoading();
     updateActiveModelUI(data.mode, data.model);
     const result = data.analysis || "No analysis returned.";
     $("resumeResult").innerHTML = `<div class="md-content">${renderMarkdown(result)}</div>`;
@@ -693,9 +713,11 @@ async function analyzeResume() {
     }
     $("resumeResultCard").scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (err) {
-    hideLoading();
     showToast(`Resume analysis error: ${err.message}`, "danger");
     reportAPIError(err.message);
+  } finally {
+    stopButtonLoading("analyzeResumeBtn");
+    hideLoading();
   }
 }
 
@@ -713,13 +735,13 @@ function initPrepStrategy() {
 
 async function generateStrategy() {
   const days = parseInt($("daysRange").value);
+  startButtonLoading("generateStrategyBtn", "Generating Plan...");
   showLoading("Building your preparation roadmap…");
   try {
     const data = await apiPost("/api/prep-strategy", {
       profile:               STATE.profile,
       days_until_interview:  days,
     });
-    hideLoading();
     updateActiveModelUI(data.mode, data.model);
     const strategy = data.strategy || "No strategy returned.";
     $("strategyResult").innerHTML = `<div class="md-content">${renderMarkdown(strategy)}</div>`;
@@ -730,9 +752,11 @@ async function generateStrategy() {
         </div>`);
     }
   } catch (err) {
-    hideLoading();
     showToast(`Strategy generation error: ${err.message}`, "danger");
     reportAPIError(err.message);
+  } finally {
+    stopButtonLoading("generateStrategyBtn");
+    hideLoading();
   }
 }
 

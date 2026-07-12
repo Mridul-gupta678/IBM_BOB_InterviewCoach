@@ -12,6 +12,7 @@
   --surface:       #ffffff;
   --surface-2:     #f0f2f6;
   --border:        #e4e7ed;
+  --overlay-bg:    rgba(255, 255, 255, 0.75);
   --text:          #1a1d24;
   --text-muted:    #6b7280;
   --text-light:    #9ca3af;
@@ -43,6 +44,7 @@
   --surface:       #1a1d27;
   --surface-2:     #242838;
   --border:        #2e3348;
+  --overlay-bg:    rgba(15, 17, 23, 0.75);
   --text:          #e8eaf0;
   --text-muted:    #8892a4;
   --text-light:    #555f77;
@@ -871,7 +873,7 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.6);
+  background: var(--overlay-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -882,14 +884,14 @@ body {
 .loading-content { text-align: center; }
 .loading-spinner {
   width: 48px; height: 48px;
-  border: 3px solid rgba(255,255,255,.2);
-  border-top-color: #fff;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin .7s linear infinite;
   margin: 0 auto 1rem;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-.loading-content p { color: #fff; font-weight: 600; font-size: .95rem; }
+.loading-content p { color: var(--text); font-weight: 600; font-size: .95rem; }
 
 /* ── Footer ───────────────────────────────────────────────── */
 .app-footer {
