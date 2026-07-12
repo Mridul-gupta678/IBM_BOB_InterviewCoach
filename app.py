@@ -337,9 +337,11 @@ def get_llm_generation(messages: list, data: dict) -> tuple[str, str]:
 
 
 
+_watsonx_init_error = None
+
 def get_watsonx_model() -> ModelInference | None:
     """Lazy-initialise and return the Watsonx ModelInference instance."""
-    global _watsonx_model
+    global _watsonx_model, _watsonx_init_error
     if _watsonx_model is not None:
         return _watsonx_model
 
@@ -371,6 +373,7 @@ def get_watsonx_model() -> ModelInference | None:
         app.logger.info(f"Watsonx model '{model_id}' initialised successfully.")
     except Exception as exc:
         app.logger.error(f"Failed to initialise Watsonx model: {exc}")
+        _watsonx_init_error = str(exc)
         _watsonx_model = None
 
     return _watsonx_model
@@ -921,7 +924,7 @@ def debug_llm():
     try:
         model = get_watsonx_model()
         if model is None:
-            watsonx_err = "Credentials not configured (model is None)"
+            watsonx_err = f"Credentials not configured or init failed: {_watsonx_init_error}"
         else:
             prompt = format_prompt_for_model([{"role": "user", "content": "Hello"}], os.getenv("WATSONX_MODEL_ID", ""))
             model.generate_text(prompt=prompt)
