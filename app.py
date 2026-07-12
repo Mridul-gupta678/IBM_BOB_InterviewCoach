@@ -1034,7 +1034,48 @@ def debug_llm():
             hf_endpoints_status[f"v1_chat_{model_name.replace('/', '_')}"] = f"Status: {r.status_code}, Body: {r.text[:120]}"
         except Exception as e:
             hf_endpoints_status[f"v1_chat_{model_name.replace('/', '_')}"] = f"Error: {e}"
+    # Test DoH resolution
+    def resolve_dns_doh(hostname: str) -> str | None:
+        try:
+            r = requests.get(f"https://1.1.1.1/dns-query?name={hostname}", headers={"accept": "application/dns-json"}, timeout=3)
+            if r.status_code == 200:
+                for a in r.json().get("Answer", []):
+                    if a.get("type") == 1:
+                        return a.get("data")
+        except Exception:
+            pass
+        try:
+            r = requests.get(f"https://8.8.8.8/resolve?name={hostname}", timeout=3)
+            if r.status_code == 200:
+                for a in r.json().get("Answer", []):
+                    if a.get("type") == 1:
+                        return a.get("data")
+        except Exception:
+            pass
+        return None
 
+    hf_ip = resolve_dns_doh("api-inference.huggingface.co")
+    dns_resolved["DoH_api-inference.huggingface.co"] = hf_ip
+
+    if hf_ip:
+        try:
+            # Disable urllib3 warnings for verify=False
+            import urllib3
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+            
+            url = f"https://{hf_ip}/models/{model_id}"
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+                "Host": "api-inference.huggingface.co"
+            }
+            payload = {"inputs": prompt, "parameters": {"max_new_tokens": 10, "temperature": 0.7}}
+            r = requests.post(url, headers=headers, json=payload, timeout=8, verify=False)
+            hf_endpoints_status["doh_ip_legacy_request"] = f"Status: {r.status_code}, Body: {r.text[:120]}"
+        except Exception as e:
+            hf_endpoints_status["doh_ip_legacy_request"] = f"Error: {e}"
+    else:
+        hf_endpoints_status["doh_ip_legacy_request"] = "Failed to resolve IP via DoH"
     return jsonify({
         "watsonx": watsonx_err,
         "huggingface_endpoints": hf_endpoints_status,
