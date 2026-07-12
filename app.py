@@ -238,11 +238,11 @@ def build_chat_messages(user_message: str, chat_history: list, user_profile: dic
     messages.append({"role": "user", "content": user_message})
     return messages
 
-def generate_huggingface_text(messages: list, api_key: str, model_id: str = "meta-llama/Llama-3.3-70B-Instruct") -> str:
+def generate_huggingface_text(messages: list, api_key: str, model_id: str = "Qwen/Qwen2.5-7B-Instruct") -> str:
     prompt = format_prompt_for_model(messages, model_id)
     endpoints = [
-        f"https://api-inference.huggingface.co/models/{model_id}",
         f"https://router.huggingface.co/hf-inference/models/{model_id}",
+        f"https://api-inference.huggingface.co/models/{model_id}",
         f"https://api.huggingface.co/models/{model_id}"
     ]
     
@@ -288,7 +288,7 @@ def get_llm_generation(messages: list, data: dict) -> tuple[str, str]:
     watsonx_model_id = os.getenv("WATSONX_MODEL_ID", "ibm/granite-3-8b-instruct")
     
     hf_api_key = data.get("huggingface_api_key") or os.getenv("HUGGINGFACE_API_KEY")
-    hf_model = data.get("huggingface_model_id") or os.getenv("HUGGINGFACE_MODEL_ID", "meta-llama/Llama-3.3-70B-Instruct")
+    hf_model = data.get("huggingface_model_id") or os.getenv("HUGGINGFACE_MODEL_ID") or "Qwen/Qwen2.5-7B-Instruct"
 
     errors = []
 
