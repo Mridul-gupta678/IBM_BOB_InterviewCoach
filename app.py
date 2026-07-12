@@ -943,7 +943,14 @@ def debug_llm():
 
     return jsonify({
         "watsonx": watsonx_err,
-        "huggingface": hf_err
+        "huggingface": hf_err,
+        "env_keys": {
+            "has_ibm_key": os.getenv("IBM_API_KEY") is not None,
+            "has_project_id": os.getenv("WATSONX_PROJECT_ID") is not None,
+            "has_hf_key": os.getenv("HUGGINGFACE_API_KEY") is not None,
+            "watsonx_model": os.getenv("WATSONX_MODEL_ID"),
+            "hf_model": os.getenv("HUGGINGFACE_MODEL_ID")
+        }
     })
 
 
