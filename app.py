@@ -1018,6 +1018,23 @@ def debug_llm():
         except Exception as e:
             hf_endpoints_status[f"fallback_{fb_model.replace('/', '_')}"] = f"Error: {e}"
 
+    # Test OpenAI compatible router
+    for model_name in ["Qwen/Qwen2.5-7B-Instruct", "meta-llama/Llama-3.3-70B-Instruct"]:
+        try:
+            r = requests.post(
+                "https://router.huggingface.co/hf-inference/v1/chat/completions",
+                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                json={
+                    "model": model_name,
+                    "messages": [{"role": "user", "content": "Hello"}],
+                    "max_tokens": 10
+                },
+                timeout=8
+            )
+            hf_endpoints_status[f"v1_chat_{model_name.replace('/', '_')}"] = f"Status: {r.status_code}, Body: {r.text[:120]}"
+        except Exception as e:
+            hf_endpoints_status[f"v1_chat_{model_name.replace('/', '_')}"] = f"Error: {e}"
+
     return jsonify({
         "watsonx": watsonx_err,
         "huggingface_endpoints": hf_endpoints_status,
