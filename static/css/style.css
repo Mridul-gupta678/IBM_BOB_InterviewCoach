@@ -481,6 +481,49 @@ body {
 .msg-bubble p:last-child {
   margin-bottom: 0;
 }
+.msg-bubble ul, .msg-bubble ol {
+  padding-left: 1.25rem;
+  margin-top: 0.4rem;
+  margin-bottom: 0.4rem;
+}
+.msg-bubble li {
+  margin-bottom: 0.25rem;
+}
+.msg-bubble li:last-child {
+  margin-bottom: 0;
+}
+
+/* Markdown Content Base Styling (for parsed markdown across all tabs/cards) */
+.md-content p {
+  margin-bottom: 0.5rem;
+}
+.md-content p:last-child {
+  margin-bottom: 0;
+}
+.md-content ul, .md-content ol {
+  padding-left: 1.25rem;
+  margin-top: 0.4rem;
+  margin-bottom: 0.4rem;
+}
+.md-content li {
+  margin-bottom: 0.25rem;
+}
+.md-content li:last-child {
+  margin-bottom: 0;
+}
+.md-content blockquote {
+  border-left: 3px solid var(--accent);
+  padding-left: 0.75rem;
+  color: var(--text-muted);
+  margin: 0.5rem 0;
+}
+.md-content code {
+  background: var(--surface-2);
+  padding: 0.15rem 0.3rem;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.85em;
+}
 .chat-msg.user .msg-bubble {
   background: linear-gradient(135deg, var(--accent), var(--purple));
   color: #fff;
