@@ -270,37 +270,7 @@ async function checkHealth() {
   try {
     const settings = JSON.parse(localStorage.getItem("itc-settings") || "{}");
     const data = await apiPost("/api/health", settings);
-    const dot  = $("statusDot");
-    if (data.watsonx === "connected") {
-      dot.className   = "status-dot connected";
-      let providerName = "Watsonx";
-      if (data.active_provider === "huggingface") providerName = "Hugging Face";
-
-      dot.title = `${providerName} connected`;
-      // navbar badge (id="infoStatus") — show provider tick
-      if ($("infoStatus")) $("infoStatus").textContent = `${providerName} ✓`;
-      // session-info card row (id="infoStatusCard")
-      if ($("infoStatusCard")) $("infoStatusCard").textContent = `${providerName} ✓`;
-
-      const labelText = `Active LLM: ${providerName} (${data.active_model})`;
-      if ($("chatActiveModel"))   $("chatActiveModel").textContent   = labelText;
-      if ($("mockActiveModel"))   $("mockActiveModel").textContent   = labelText;
-      if ($("resumeActiveModel")) $("resumeActiveModel").textContent = labelText;
-      if ($("prepActiveModel"))   $("prepActiveModel").textContent   = labelText;
-      if ($("infoModel"))         $("infoModel").textContent         = data.active_model;
-    } else {
-      dot.className = "status-dot demo-mode";
-      dot.title     = "Demo mode (configure API key or settings)";
-      if ($("infoStatus"))     $("infoStatus").textContent     = "Demo Mode";
-      if ($("infoStatusCard")) $("infoStatusCard").textContent = "Demo Mode";
-
-      const labelText = `Active LLM: Static Demo Mode`;
-      if ($("chatActiveModel"))   $("chatActiveModel").textContent   = labelText;
-      if ($("mockActiveModel"))   $("mockActiveModel").textContent   = labelText;
-      if ($("resumeActiveModel")) $("resumeActiveModel").textContent = labelText;
-      if ($("prepActiveModel"))   $("prepActiveModel").textContent   = labelText;
-      if ($("infoModel"))         $("infoModel").textContent         = "Static Demo";
-    }
+    updateActiveModelUI(data.active_provider, data.active_model);
   } catch (err) {
     console.error("Health check error:", err);
     $("statusDot").className = "status-dot error-state";
@@ -371,6 +341,7 @@ async function sendChatMessage() {
       profile: STATE.profile,
     });
     typing.remove();
+    updateActiveModelUI(data.mode, data.model);
     const botText = data.response || "I didn't get a response. Please try again.";
     appendChatMsg("bot", botText);
     STATE.chatHistory.push({ role: "assistant", content: botText });
@@ -490,6 +461,7 @@ async function startMockSession() {
       count,
     });
     hideLoading();
+    updateActiveModelUI(data.mode, data.model);
 
     // Parse questions from text (split on numbered lines)
     const rawText = data.questions || "";
@@ -595,6 +567,7 @@ async function submitAnswer() {
       profile: STATE.profile,
     });
     hideLoading();
+    updateActiveModelUI(data.mode, data.model);
     showEvaluation(data.evaluation || "No evaluation returned.");
   } catch (err) {
     hideLoading();
@@ -706,6 +679,7 @@ async function analyzeResume() {
       profile:     STATE.profile,
     });
     hideLoading();
+    updateActiveModelUI(data.mode, data.model);
     const result = data.analysis || "No analysis returned.";
     $("resumeResult").innerHTML = `<div class="md-content">${renderMarkdown(result)}</div>`;
     if (data.mode === "demo") {
@@ -742,6 +716,7 @@ async function generateStrategy() {
       days_until_interview:  days,
     });
     hideLoading();
+    updateActiveModelUI(data.mode, data.model);
     const strategy = data.strategy || "No strategy returned.";
     $("strategyResult").innerHTML = `<div class="md-content">${renderMarkdown(strategy)}</div>`;
     if (data.mode === "demo") {
@@ -980,7 +955,6 @@ function setYear() {
 function initSettings() {
   const DEFAULT_SETTINGS = {
     llm_provider: "auto",
-    watsonx_model_id: "",
     huggingface_api_key: "",
     huggingface_model_id: "meta-llama/Llama-3.3-70B-Instruct"
   };
@@ -1006,7 +980,6 @@ function initSettings() {
   $("saveSettingsBtn").addEventListener("click", () => {
     const newSettings = {
       llm_provider:        $("settingsProvider").value || "auto",
-      watsonx_model_id:    $("settingsWatsonxModel").value.trim(),
       huggingface_api_key: $("settingsHfKey").value.trim(),
       huggingface_model_id: $("settingsHfModel").value.trim() || "meta-llama/Llama-3.3-70B-Instruct"
     };
@@ -1017,9 +990,41 @@ function initSettings() {
 
 function populateSettingsModal(s) {
   $("settingsProvider").value = s.llm_provider || "auto";
-  $("settingsWatsonxModel").value = s.watsonx_model_id || "";
   $("settingsHfKey").value = s.huggingface_api_key || "";
   $("settingsHfModel").value = s.huggingface_model_id || "meta-llama/Llama-3.3-70B-Instruct";
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  UPDATE ACTIVE MODEL INDICATORS ON UI
+// ═════════════════════════════════════════════════════════════════════════════
+function updateActiveModelUI(provider, modelName) {
+  if (!provider) return;
+  const dot = $("statusDot");
+  let providerName = "Static Demo";
+  let statusClass = "status-dot demo-mode";
+  
+  if (provider === "watsonx") {
+    providerName = "Watsonx";
+    statusClass = "status-dot connected";
+  } else if (provider === "huggingface") {
+    providerName = "Hugging Face";
+    statusClass = "status-dot connected";
+  }
+  
+  if (dot) {
+    dot.className = statusClass;
+    dot.title = `${providerName} connected`;
+  }
+  
+  if ($("infoStatus")) $("infoStatus").textContent = `${providerName} ✓`;
+  if ($("infoStatusCard")) $("infoStatusCard").textContent = `${providerName} ✓`;
+
+  const labelText = `Active LLM: ${providerName} (${modelName || "unknown"})`;
+  if ($("chatActiveModel"))   $("chatActiveModel").textContent   = labelText;
+  if ($("mockActiveModel"))   $("mockActiveModel").textContent   = labelText;
+  if ($("resumeActiveModel")) $("resumeActiveModel").textContent = labelText;
+  if ($("prepActiveModel"))   $("prepActiveModel").textContent   = labelText;
+  if ($("infoModel"))         $("infoModel").textContent         = modelName || "unknown";
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
