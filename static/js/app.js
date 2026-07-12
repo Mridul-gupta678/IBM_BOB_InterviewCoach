@@ -275,39 +275,45 @@ async function checkHealth() {
       dot.className   = "status-dot connected";
       let providerName = "Watsonx";
       if (data.active_provider === "huggingface") providerName = "Hugging Face";
-      
-      dot.title       = `${providerName} connected`;
-      $("infoStatus").textContent = `${providerName} ✓`;
+
+      dot.title = `${providerName} connected`;
+      // navbar badge (id="infoStatus") — show provider tick
+      if ($("infoStatus")) $("infoStatus").textContent = `${providerName} ✓`;
+      // session-info card row (id="infoStatusCard")
+      if ($("infoStatusCard")) $("infoStatusCard").textContent = `${providerName} ✓`;
 
       const labelText = `Active LLM: ${providerName} (${data.active_model})`;
-      if ($("chatActiveModel")) $("chatActiveModel").textContent = labelText;
-      if ($("mockActiveModel")) $("mockActiveModel").textContent = labelText;
+      if ($("chatActiveModel"))   $("chatActiveModel").textContent   = labelText;
+      if ($("mockActiveModel"))   $("mockActiveModel").textContent   = labelText;
       if ($("resumeActiveModel")) $("resumeActiveModel").textContent = labelText;
-      if ($("prepActiveModel")) $("prepActiveModel").textContent = labelText;
-      if ($("infoModel")) $("infoModel").textContent = data.active_model;
+      if ($("prepActiveModel"))   $("prepActiveModel").textContent   = labelText;
+      if ($("infoModel"))         $("infoModel").textContent         = data.active_model;
     } else {
-      dot.className   = "status-dot demo-mode";
-      dot.title       = "Demo mode (configure settings)";
-      $("infoStatus").textContent = "Demo Mode";
+      dot.className = "status-dot demo-mode";
+      dot.title     = "Demo mode (configure API key or settings)";
+      if ($("infoStatus"))     $("infoStatus").textContent     = "Demo Mode";
+      if ($("infoStatusCard")) $("infoStatusCard").textContent = "Demo Mode";
 
       const labelText = `Active LLM: Static Demo Mode`;
-      if ($("chatActiveModel")) $("chatActiveModel").textContent = labelText;
-      if ($("mockActiveModel")) $("mockActiveModel").textContent = labelText;
+      if ($("chatActiveModel"))   $("chatActiveModel").textContent   = labelText;
+      if ($("mockActiveModel"))   $("mockActiveModel").textContent   = labelText;
       if ($("resumeActiveModel")) $("resumeActiveModel").textContent = labelText;
-      if ($("prepActiveModel")) $("prepActiveModel").textContent = labelText;
-      if ($("infoModel")) $("infoModel").textContent = "Static Demo";
+      if ($("prepActiveModel"))   $("prepActiveModel").textContent   = labelText;
+      if ($("infoModel"))         $("infoModel").textContent         = "Static Demo";
     }
   } catch (err) {
     console.error("Health check error:", err);
     $("statusDot").className = "status-dot error-state";
     $("statusDot").title     = "Connection error";
+    if ($("infoStatus"))     $("infoStatus").textContent     = "Error";
+    if ($("infoStatusCard")) $("infoStatusCard").textContent = "Error";
 
     const labelText = `Active LLM: Connection Error`;
-    if ($("chatActiveModel")) $("chatActiveModel").textContent = labelText;
-    if ($("mockActiveModel")) $("mockActiveModel").textContent = labelText;
+    if ($("chatActiveModel"))   $("chatActiveModel").textContent   = labelText;
+    if ($("mockActiveModel"))   $("mockActiveModel").textContent   = labelText;
     if ($("resumeActiveModel")) $("resumeActiveModel").textContent = labelText;
-    if ($("prepActiveModel")) $("prepActiveModel").textContent = labelText;
-    if ($("infoModel")) $("infoModel").textContent = "Error";
+    if ($("prepActiveModel"))   $("prepActiveModel").textContent   = labelText;
+    if ($("infoModel"))         $("infoModel").textContent         = "Error";
   }
 }
 
@@ -972,22 +978,35 @@ function setYear() {
 //  SETTINGS & PROVIDERS
 // ═════════════════════════════════════════════════════════════════════════════
 function initSettings() {
-  const saved = localStorage.getItem("itc-settings");
-  let settings = {};
+  const DEFAULT_SETTINGS = {
+    llm_provider: "auto",
+    watsonx_model_id: "",
+    huggingface_api_key: "",
+    huggingface_model_id: "meta-llama/Llama-3.3-70B-Instruct"
+  };
+
+  let saved = localStorage.getItem("itc-settings");
+  let settings = DEFAULT_SETTINGS;
+
   if (saved) {
-    settings = JSON.parse(saved);
-  } else {
-    settings = {
-      llm_provider: "auto",
-      huggingface_api_key: "",
-      huggingface_model_id: "meta-llama/Llama-3.3-70B-Instruct"
-    };
+    try {
+      const parsed = JSON.parse(saved);
+      // Merge: keep defaults for any missing key, never let stale values persist
+      settings = { ...DEFAULT_SETTINGS, ...parsed };
+    } catch {
+      // Corrupted localStorage — reset to defaults
+      localStorage.removeItem("itc-settings");
+    }
   }
+
+  // Always persist clean settings so itc-settings is never missing
+  localStorage.setItem("itc-settings", JSON.stringify(settings));
   populateSettingsModal(settings);
 
   $("saveSettingsBtn").addEventListener("click", () => {
     const newSettings = {
-      llm_provider: $("settingsProvider").value,
+      llm_provider:        $("settingsProvider").value || "auto",
+      watsonx_model_id:    $("settingsWatsonxModel").value.trim(),
       huggingface_api_key: $("settingsHfKey").value.trim(),
       huggingface_model_id: $("settingsHfModel").value.trim() || "meta-llama/Llama-3.3-70B-Instruct"
     };
@@ -998,6 +1017,7 @@ function initSettings() {
 
 function populateSettingsModal(s) {
   $("settingsProvider").value = s.llm_provider || "auto";
+  $("settingsWatsonxModel").value = s.watsonx_model_id || "";
   $("settingsHfKey").value = s.huggingface_api_key || "";
   $("settingsHfModel").value = s.huggingface_model_id || "meta-llama/Llama-3.3-70B-Instruct";
 }

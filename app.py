@@ -185,7 +185,7 @@ AGENT_INSTRUCTIONS = {
 #  END AGENT INSTRUCTIONS
 # ─────────────────────────────────────────────────────────────────────────────
 
-load_dotenv()
+load_dotenv(override=True)
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "interviewtrainer-dev-secret-2024")
@@ -197,7 +197,8 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024  # 5 MB max upload
 
 # ── Watsonx client initialisation ────────────────────────────────────────────
-_watsonx_model: ModelInference | None = None
+_watsonx_model:    ModelInference | None = None
+_watsonx_model_id: str | None = None          # tracks which model_id is cached
 
 def format_prompt_for_model(messages: list, model_id: str) -> str:
     model_id_lower = model_id.lower()
@@ -282,7 +283,7 @@ def get_llm_generation(messages: list, data: dict) -> tuple[str, str]:
     
     watsonx_api_key = os.getenv("IBM_API_KEY")
     watsonx_project_id = os.getenv("WATSONX_PROJECT_ID")
-    watsonx_model_id = os.getenv("WATSONX_MODEL_ID", "ibm/granite-3-8b-instruct")
+    watsonx_model_id = data.get("watsonx_model_id") or os.getenv("WATSONX_MODEL_ID", "ibm/granite-3-8b-instruct")
     
     hf_api_key = data.get("huggingface_api_key") or os.getenv("HUGGINGFACE_API_KEY")
     hf_model = data.get("huggingface_model_id") or os.getenv("HUGGINGFACE_MODEL_ID") or "Qwen/Qwen2.5-7B-Instruct"
@@ -290,12 +291,18 @@ def get_llm_generation(messages: list, data: dict) -> tuple[str, str]:
     errors = []
 
     def try_watsonx():
-        model = get_watsonx_model()
+        model = get_watsonx_model(watsonx_model_id)
         if model is None:
             raise ValueError("Watsonx credentials not configured.")
-        prompt = format_prompt_for_model(messages, watsonx_model_id)
-        result = model.generate_text(prompt=prompt)
-        return result.strip() if isinstance(result, str) else str(result)
+        # Use chat() — the current /ml/v1/text/chat endpoint.
+        # It accepts the messages list directly; no manual prompt template needed.
+        response = model.chat(messages=messages)
+        result = (
+            response.get("choices", [{}])[0]
+                    .get("message", {})
+                    .get("content", "")
+        )
+        return result.strip() if result else ""
 
     def try_huggingface():
         if not hf_api_key:
@@ -372,22 +379,39 @@ def get_llm_generation(messages: list, data: dict) -> tuple[str, str]:
 
 _watsonx_init_error = None
 
-def get_watsonx_model() -> ModelInference | None:
-    """Lazy-initialise and return the Watsonx ModelInference instance."""
-    global _watsonx_model, _watsonx_init_error
-    if _watsonx_model is not None:
-        return _watsonx_model
+def get_watsonx_model(model_id: str = None) -> ModelInference | None:
+    """
+    Lazy-initialise and return the Watsonx ModelInference instance.
+    Re-initialises automatically if WATSONX_MODEL_ID changed in .env
+    (e.g. swapping between ibm/granite-3-8b-instruct and meta-llama/llama-3-3-70b-instruct).
+    Requires a server restart to pick up credential changes (IBM_API_KEY, WATSONX_PROJECT_ID).
+    Model ID changes are detected per-request without a restart.
+    """
+    global _watsonx_model, _watsonx_model_id, _watsonx_init_error
 
     api_key    = os.getenv("IBM_API_KEY")
     project_id = os.getenv("WATSONX_PROJECT_ID")
     url        = os.getenv("WATSONX_URL", "https://us-south.ml.cloud.ibm.com").rstrip("/")
-    model_id   = os.getenv("WATSONX_MODEL_ID", "ibm/granite-3-8b-instruct")
+    if not model_id:
+        model_id   = os.getenv("WATSONX_MODEL_ID", "ibm/granite-3-8b-instruct")
 
     if not api_key or not project_id:
         app.logger.warning(
             "IBM_API_KEY or WATSONX_PROJECT_ID not set — running in demo mode."
         )
         return None
+
+    # Return cached instance only if the model ID has not changed
+    if _watsonx_model is not None and _watsonx_model_id == model_id:
+        return _watsonx_model
+
+    # model_id changed (or first call) — (re-)initialise
+    if _watsonx_model is not None:
+        app.logger.info(
+            f"WATSONX_MODEL_ID changed from '{_watsonx_model_id}' to '{model_id}' — re-initialising."
+        )
+    _watsonx_model    = None
+    _watsonx_model_id = None
 
     try:
         credentials = Credentials(url=url, api_key=api_key)
@@ -403,11 +427,13 @@ def get_watsonx_model() -> ModelInference | None:
             credentials=credentials,
             project_id=project_id,
         )
+        _watsonx_model_id = model_id
         app.logger.info(f"Watsonx model '{model_id}' initialised successfully.")
     except Exception as exc:
         app.logger.error(f"Failed to initialise Watsonx model: {exc}")
         _watsonx_init_error = str(exc)
-        _watsonx_model = None
+        _watsonx_model    = None
+        _watsonx_model_id = None
 
     return _watsonx_model
 
@@ -898,11 +924,18 @@ def health():
         except Exception:
             pass
 
+    # Empty string from frontend means "not set" — treat same as absent
     provider = data.get("llm_provider") or os.getenv("LLM_PROVIDER") or "auto"
+    if provider.strip() == "":
+        provider = "auto"
     
+    watsonx_model_id = data.get("watsonx_model_id")
+    if not watsonx_model_id or watsonx_model_id.strip() == "":
+        watsonx_model_id = os.getenv("WATSONX_MODEL_ID", "ibm/granite-3-8b-instruct")
+
     watsonx_ok = False
     try:
-        model = get_watsonx_model()
+        model = get_watsonx_model(watsonx_model_id)
         watsonx_ok = model is not None
     except Exception:
         pass
@@ -932,9 +965,11 @@ def health():
 
     model_name = "Static Demo"
     if active == "watsonx":
-        model_name = os.getenv("WATSONX_MODEL_ID", "ibm/granite-3-8b-instruct")
+        model_name = watsonx_model_id
     elif active == "huggingface":
         model_name = data.get("huggingface_model_id") or os.getenv("HUGGINGFACE_MODEL_ID", "meta-llama/Llama-3.3-70B-Instruct")
+        if not model_name or model_name.strip() == "":
+            model_name = "Qwen/Qwen2.5-7B-Instruct"
 
     return jsonify({
         "status":    "ok",
@@ -963,15 +998,15 @@ def debug_llm():
         except Exception as e:
             dns_resolved[host] = f"Error: {e}"
 
-    # Test Watsonx
+    # Test Watsonx using chat() (current endpoint)
     try:
         model = get_watsonx_model()
         if model is None:
             watsonx_err = f"Credentials not configured or init failed: {_watsonx_init_error}"
         else:
-            prompt = format_prompt_for_model([{"role": "user", "content": "Hello"}], os.getenv("WATSONX_MODEL_ID", ""))
-            model.generate_text(prompt=prompt)
-            watsonx_err = "Success!"
+            response = model.chat(messages=[{"role": "user", "content": "Hello"}])
+            content = response.get("choices", [{}])[0].get("message", {}).get("content", "")
+            watsonx_err = f"Success! Response: {content.strip()[:60]}"
     except Exception as e:
         watsonx_err = f"Error: {str(e)}"
 

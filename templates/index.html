@@ -198,7 +198,7 @@
             <div class="info-row"><span class="info-label">Messages</span><span class="badge-count" id="msgCount">0</span></div>
             <div class="info-row"><span class="info-label">Mode</span><span class="info-value" id="infoMode">Chat</span></div>
             <div class="info-row"><span class="info-label">AI Model</span><span class="info-value text-accent" id="infoModel">checking...</span></div>
-            <div class="info-row"><span class="info-label">Status</span><span class="info-value" id="infoStatus">Ready</span></div>
+            <div class="info-row"><span class="info-label">Status</span><span class="info-value" id="infoStatusCard">Ready</span></div>
           </div>
         </div>
       </div>
@@ -617,6 +617,11 @@
             <option value="demo">Static Demo Mode (Fallback)</option>
           </select>
           <div class="form-text">In Auto-detect mode, the system cascades down the providers if one fails or is unconfigured.</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">IBM Watsonx Model ID</label>
+          <input type="text" class="form-control" id="settingsWatsonxModel" placeholder="Default (from Vercel environment variable)">
+          <div class="form-text">Leave blank to use the server's configured <code>WATSONX_MODEL_ID</code>.</div>
         </div>
         <div class="mb-3">
           <label class="form-label fw-semibold">Hugging Face API Token</label>
