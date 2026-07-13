@@ -41,7 +41,7 @@
 
 ---
 
-## ⚡ Vercel Deployment (Step-by-Step for Beginners)
+## ⚡ Vercel Deployment
 
 Vercel makes it incredibly easy to deploy Python Flask applications as Serverless Functions. Follow these steps to put your application online:
 
@@ -110,6 +110,12 @@ Edit `.env` and fill in your primary Watsonx or Hugging Face access credentials.
 python app.py
 ```
 Open **http://127.0.0.1:5001** in your browser.
+
+---
+
+## 🔗 Links
+* Repository: https://github.com/GokulKrishnaR/InterviewCoach
+* Live App: https://interview-coach-and-trainer.vercel.app/
 
 ---
 
