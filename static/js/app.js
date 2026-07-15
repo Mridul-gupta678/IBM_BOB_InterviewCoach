@@ -804,9 +804,9 @@ function renderProgress() {
 function getChartColors() {
   const dark = document.documentElement.getAttribute("data-theme") === "dark";
   return {
-    gridColor:  dark ? "rgba(255,255,255,.08)" : "rgba(0,0,0,.06)",
-    textColor:  dark ? "#8892a4" : "#6b7280",
-    bgColor:    dark ? "#1a1d27" : "#ffffff",
+    gridColor:  dark ? "rgba(255,255,255,.05)" : "rgba(0,0,0,.05)",
+    textColor:  dark ? "#94a3b8" : "#475569",
+    bgColor:    dark ? "#12141d" : "#ffffff",
   };
 }
 
@@ -832,12 +832,15 @@ function renderScoreChart(sessions) {
       datasets: [{
         label:           "Average Score",
         data,
-        borderColor:     "#4f6ef7",
-        backgroundColor: "rgba(79,110,247,.12)",
+        borderColor:     "#3b82f6",
+        backgroundColor: "rgba(59,130,246,.08)",
         tension:         0.4,
         fill:            true,
-        pointBackgroundColor: "#4f6ef7",
+        pointBackgroundColor: "#3b82f6",
+        pointBorderColor: "#fff",
+        pointBorderWidth: 2,
         pointRadius:     5,
+        pointHoverRadius: 7,
       }],
     },
     options: {
@@ -876,7 +879,7 @@ function renderModeChart(sessions) {
 
   const labels = Object.keys(modeMap);
   const data   = labels.map(l => Math.round(modeMap[l].reduce((a,b)=>a+b,0)/modeMap[l].length));
-  const bgColors = ["#4f6ef7","#7c3aed","#059669","#d97706","#dc2626","#0891b2"].slice(0, labels.length);
+  const bgColors = ["#3b82f6","#8b5cf6","#10b981","#f59e0b","#f43f5e","#06b6d4"].slice(0, labels.length);
 
   if (modeChartInstance) modeChartInstance.destroy();
 
@@ -937,16 +940,29 @@ function updateChartTheme() {
 //  TOAST NOTIFICATIONS
 // ═════════════════════════════════════════════════════════════════════════════
 function showToast(message, type = "info") {
-  const colors = { info:"#4f6ef7", success:"#16a34a", warning:"#d97706", danger:"#dc2626" };
+  const colors = {
+    info:    "rgba(59, 130, 246, 0.85)",
+    success: "rgba(16, 185, 129, 0.85)",
+    warning: "rgba(245, 158, 11, 0.85)",
+    danger:  "rgba(244, 63, 94, 0.85)"
+  };
+  const borders = {
+    info:    "rgba(59, 130, 246, 0.2)",
+    success: "rgba(16, 185, 129, 0.2)",
+    warning: "rgba(245, 158, 11, 0.2)",
+    danger:  "rgba(244, 63, 94, 0.2)"
+  };
   const toast = document.createElement("div");
   toast.style.cssText = `
-    position:fixed; bottom:20px; right:20px; z-index:99999;
+    position:fixed; bottom:24px; right:24px; z-index:99999;
     background:${colors[type]||colors.info}; color:#fff;
-    padding:.75rem 1.25rem; border-radius:10px;
-    font-size:.85rem; font-weight:600;
-    box-shadow:0 4px 20px rgba(0,0,0,.25);
-    animation: toastIn .25s ease;
-    max-width:320px; line-height:1.4;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border: 1px solid ${borders[type]||borders.info};
+    padding:.85rem 1.4rem; border-radius:12px;
+    font-size:.88rem; font-weight:600;
+    box-shadow:0 10px 30px rgba(0,0,0,.25);
+    animation: toastIn .28s cubic-bezier(0.16, 1, 0.3, 1);
+    max-width:340px; line-height:1.5;
   `;
   toast.textContent = message;
   document.body.appendChild(toast);
